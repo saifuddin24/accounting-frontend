@@ -2,6 +2,7 @@
 import { PlusCircle, Save, Trash2 } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import SelectDropdown from '../components/ui/SelectDropdown.vue'
 import { useAccountingStore } from '../stores/accounting'
 
 const store = useAccountingStore()
@@ -13,6 +14,13 @@ const rows = ref([
   { account_id: '', debit: '', credit: '' },
   { account_id: '', debit: '', credit: '' },
 ])
+
+const accountOptions = computed(() =>
+  store.accounts.map((acc) => ({
+    label: `${acc.code} - ${acc.name}`,
+    value: acc.id,
+  })),
+)
 
 const totalDebit = computed(() => {
   return rows.value.reduce((sum, row) => sum + (parseFloat(row.debit) || 0), 0)
@@ -78,7 +86,7 @@ onMounted(() => {
 
 <template>
   <div class="max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">New Journal Entry</h1>
       <div class="text-sm text-gray-500">Record financial transactions</div>
     </div>
@@ -105,7 +113,7 @@ onMounted(() => {
       </div>
 
       <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-        <table class="w-full text-left bg-white dark:bg-gray-800">
+        <table class="w-full text-left bg-white dark:bg-gray-800 min-w-[600px] sm:min-w-0">
           <thead
             class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase text-xs"
           >
@@ -119,12 +127,12 @@ onMounted(() => {
           <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
             <tr v-for="(row, index) in rows" :key="index">
               <td class="px-4 py-2">
-                <select v-model="row.account_id" class="input-primary py-1 text-sm">
-                  <option value="" disabled>Select Account</option>
-                  <option v-for="acc in store.accounts" :key="acc.id" :value="acc.id">
-                    {{ acc.code }} - {{ acc.name }}
-                  </option>
-                </select>
+                <SelectDropdown
+                  v-model="row.account_id"
+                  :options="accountOptions"
+                  placeholder="Select Account"
+                  class="w-full"
+                />
               </td>
               <td class="px-4 py-2">
                 <input
@@ -183,23 +191,24 @@ onMounted(() => {
         </table>
       </div>
 
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div v-if="!isBalanced" class="text-red-500 text-sm flex items-center gap-2">
-          ⚠️ Debits must equal Credits. Difference: {{ (totalDebit - totalCredit).toFixed(2) }}
+          <span class="flex-shrink-0">⚠️</span>
+          <span>Debits must equal Credits. Diff: {{ (totalDebit - totalCredit).toFixed(2) }}</span>
         </div>
         <div v-else class="text-green-600 text-sm flex items-center gap-2">✅ Ready to post.</div>
 
-        <div class="flex gap-4">
+        <div class="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
           <button
             @click="router.push('/journals')"
-            class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+            class="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-lg text-sm"
           >
             Cancel
           </button>
           <button
             @click="submitEntry"
             :disabled="!isBalanced"
-            class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             <Save class="w-4 h-4" />
             Post Entry

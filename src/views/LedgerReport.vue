@@ -1,7 +1,9 @@
 <script setup>
 import { Download, Printer, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
+import SelectDropdown from '../components/ui/SelectDropdown.vue'
 import { useAccountingStore } from '../stores/accounting'
+import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
 
@@ -10,6 +12,13 @@ const filters = ref({
   start_date: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10), // Jan 1st
   end_date: new Date().toISOString().slice(0, 10),
 })
+
+const accountOptions = computed(() =>
+  store.accounts.map((acc) => ({
+    label: `${acc.code} - ${acc.name} (${acc.type})`,
+    value: acc.id,
+  })),
+)
 
 const reportData = ref(null)
 
@@ -50,12 +59,11 @@ onMounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium mb-1">Select Account</label>
-          <select v-model="filters.account_id" class="input-primary">
-            <option value="" disabled>Choose an account to view...</option>
-            <option v-for="acc in store.accounts" :key="acc.id" :value="acc.id">
-              {{ acc.code }} - {{ acc.name }} ({{ acc.type }})
-            </option>
-          </select>
+          <SelectDropdown
+            v-model="filters.account_id"
+            :options="accountOptions"
+            placeholder="Choose an account to view..."
+          />
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">From Date</label>
@@ -75,7 +83,7 @@ onMounted(() => {
     </div>
 
     <!-- Report Content -->
-    <div v-if="reportData" class="card overflow-hidden animate-fade-in">
+    <div v-if="reportData" class="card overflow-x-auto animate-fade-in">
       <div
         class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/30"
       >
@@ -84,8 +92,9 @@ onMounted(() => {
             {{ reportData.account.name }}
           </h2>
           <p class="text-sm text-gray-500">
-            Code: {{ reportData.account.code }} | Period: {{ reportData.period.start }} to
-            {{ reportData.period.end }}
+            Code: {{ reportData.account.code }} | Period:
+            {{ formatDate(reportData.period.start) }} to
+            {{ formatDate(reportData.period.end) }}
           </p>
         </div>
         <div class="text-right">
@@ -101,7 +110,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <table class="w-full text-left text-sm">
+      <table class="w-full text-left text-sm min-w-[800px] sm:min-w-0">
         <thead
           class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase font-semibold"
         >
@@ -132,7 +141,7 @@ onMounted(() => {
             :key="line.id"
             class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
-            <td class="px-6 py-3 text-gray-500">{{ line.date }}</td>
+            <td class="px-6 py-3 text-gray-500">{{ formatDate(line.date) }}</td>
             <td class="px-6 py-3 text-primary-600 cursor-pointer hover:underline">
               {{ line.entry_number }}
             </td>

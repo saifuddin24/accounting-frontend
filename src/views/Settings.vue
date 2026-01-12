@@ -2,6 +2,7 @@
 import { Building2, Calendar, Plus, X } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import { useAccountingStore } from '../stores/accounting'
+import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
 const activeTab = ref('company')
@@ -246,8 +247,8 @@ onMounted(loadData)
         </button>
       </div>
 
-      <div class="overflow-hidden card">
-        <table class="w-full text-left text-sm">
+      <div class="overflow-x-auto card">
+        <table class="w-full text-left text-sm min-w-[600px] sm:min-w-0">
           <thead
             class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase font-semibold"
           >
@@ -271,8 +272,12 @@ onMounted(loadData)
                   <span class="font-bold text-gray-900 dark:text-white">{{ fy.name }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 text-gray-600 dark:text-gray-400">{{ fy.start_date }}</td>
-              <td class="px-6 py-4 text-gray-600 dark:text-gray-400">{{ fy.end_date }}</td>
+              <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                {{ formatDate(fy.start_date) }}
+              </td>
+              <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                {{ formatDate(fy.end_date) }}
+              </td>
               <td class="px-6 py-4">
                 <span
                   v-if="fy.is_closed"

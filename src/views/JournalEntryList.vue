@@ -1,9 +1,9 @@
 <script setup>
-import { format } from 'date-fns'
 import { ArrowUpDown, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAccountingStore } from '../stores/accounting'
+import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
 const route = useRoute()
@@ -61,10 +61,6 @@ const processedDetailedLines = computed(() => {
 })
 
 // Helpers
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
-  return format(new Date(dateStr), 'dd-MM-yyyy')
-}
 const formatCurrency = (val) => Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })
 
 // Core Fetch Logic
@@ -220,8 +216,8 @@ onMounted(() => {
     </div>
 
     <!-- SUMMARY VIEW -->
-    <div v-else-if="viewMode === 'summary'" class="card overflow-hidden animate-fade-in">
-      <table class="w-full text-left text-sm">
+    <div v-else-if="viewMode === 'summary'" class="card overflow-x-auto animate-fade-in">
+      <table class="w-full text-left text-sm min-w-[600px] sm:min-w-0">
         <thead
           class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase font-semibold"
         >
@@ -282,8 +278,8 @@ onMounted(() => {
     </div>
 
     <!-- DETAILED VIEW -->
-    <div v-else-if="viewMode === 'detailed'" class="card overflow-hidden animate-fade-in">
-      <table class="w-full text-left text-sm border-collapse">
+    <div v-else-if="viewMode === 'detailed'" class="card overflow-x-auto animate-fade-in">
+      <table class="w-full text-left text-sm border-collapse min-w-[800px] sm:min-w-0">
         <thead
           class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase font-semibold border-b dark:border-gray-700"
         >
