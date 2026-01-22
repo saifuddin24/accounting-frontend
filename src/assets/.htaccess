@@ -1,0 +1,13 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Base path
+RewriteBase /accounting/
+
+# Redirect all requests to index.html if file/folder doesn't exist
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*$ index.html [L,QSA]
+
+# Optional: prevent directory listing
+Options -Indexes

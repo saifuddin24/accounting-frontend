@@ -1,12 +1,30 @@
 import { api } from '@/utils/api'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 export const useAccountingStore = defineStore('accounting', () => {
   const accounts = ref([])
   const journals = ref([])
   const loading = ref(false)
   const error = ref(null)
+
+  // Centralized account options for SelectDropdown
+  const accountOptions = computed(() => {
+    const typeOrder = ['Asset', 'Liability', 'Equity', 'Income', 'Expense']
+    return [...accounts.value]
+      .sort((a, b) => {
+        const typeOrderA = typeOrder.indexOf(a.type)
+        const typeOrderB = typeOrder.indexOf(b.type)
+        if (typeOrderA !== typeOrderB) return typeOrderA - typeOrderB
+        return a.code.localeCompare(b.code)
+      })
+      .map((acc) => ({
+        label: `${acc.code} - ${acc.name}`,
+        value: acc.id,
+        group: acc.type,
+        subtext: acc.sub_type,
+      }))
+  })
 
   // Fetch all accounts
   async function fetchAccounts() {
@@ -57,6 +75,32 @@ export const useAccountingStore = defineStore('accounting', () => {
       const data = await api.get(`/api/v1/journals?${query}`)
       journals.value = data
       return data
+    } catch (e) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Fetch a single journal entry
+  async function fetchJournalEntry(id) {
+    loading.value = true
+    try {
+      return await api.get(`/api/v1/journals/${id}`)
+    } catch (e) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Delete a journal entry
+  async function deleteJournalEntry(id) {
+    loading.value = true
+    try {
+      await api.delete(`/api/v1/journals/${id}`)
     } catch (e) {
       error.value = e.message
       throw e
@@ -190,6 +234,7 @@ export const useAccountingStore = defineStore('accounting', () => {
 
   return {
     accounts,
+    accountOptions,
     journals,
     loading,
     error,
@@ -197,6 +242,8 @@ export const useAccountingStore = defineStore('accounting', () => {
     createAccount,
     createJournalEntry,
     fetchJournals,
+    fetchJournalEntry,
+    deleteJournalEntry,
     fetchJournalLines,
     fetchLedger,
     fetchTrialBalance,

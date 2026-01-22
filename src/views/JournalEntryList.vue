@@ -248,6 +248,7 @@ onMounted(() => {
               </div>
             </th>
             <th class="px-6 py-3 text-right">Status</th>
+            <th class="px-6 py-3"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -268,6 +269,14 @@ onMounted(() => {
               >
                 {{ entry.status }}
               </span>
+            </td>
+            <td class="px-6 py-3 text-right">
+              <router-link
+                :to="`/journals/${entry.id}`"
+                class="text-primary-600 hover:text-primary-900 font-medium"
+              >
+                View
+              </router-link>
             </td>
           </tr>
         </tbody>

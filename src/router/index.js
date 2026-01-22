@@ -1,10 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ChartOfAccounts from '../views/ChartOfAccounts.vue'
 import Dashboard from '../views/Dashboard.vue'
-import JournalEntry from '../views/JournalEntry.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.VITE_BASE_PATH),
   routes: [
     {
       path: '/',
@@ -24,6 +23,11 @@ const router = createRouter({
       path: '/journals/create',
       name: 'journals-create',
       component: () => import('../views/JournalEntryCreate.vue'),
+    },
+    {
+      path: '/journals/:id',
+      name: 'journals-show',
+      component: () => import('../views/JournalEntryShow.vue'),
     },
     {
       path: '/reports',

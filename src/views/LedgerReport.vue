@@ -13,13 +13,6 @@ const filters = ref({
   end_date: new Date().toISOString().slice(0, 10),
 })
 
-const accountOptions = computed(() =>
-  store.accounts.map((acc) => ({
-    label: `${acc.code} - ${acc.name} (${acc.type})`,
-    value: acc.id,
-  })),
-)
-
 const reportData = ref(null)
 
 async function generateReport() {
@@ -61,7 +54,7 @@ onMounted(() => {
           <label class="block text-sm font-medium mb-1">Select Account</label>
           <SelectDropdown
             v-model="filters.account_id"
-            :options="accountOptions"
+            :options="store.accountOptions"
             placeholder="Choose an account to view..."
           />
         </div>

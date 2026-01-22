@@ -11,16 +11,9 @@ const router = useRouter()
 const entryDate = ref(new Date().toISOString().slice(0, 10))
 const description = ref('')
 const rows = ref([
-  { account_id: '', debit: '', credit: '' },
-  { account_id: '', debit: '', credit: '' },
+  { account_id: '', description: '', debit: '', credit: '' },
+  { account_id: '', description: '', debit: '', credit: '' },
 ])
-
-const accountOptions = computed(() =>
-  store.accounts.map((acc) => ({
-    label: `${acc.code} - ${acc.name}`,
-    value: acc.id,
-  })),
-)
 
 const totalDebit = computed(() => {
   return rows.value.reduce((sum, row) => sum + (parseFloat(row.debit) || 0), 0)
@@ -36,7 +29,7 @@ const isBalanced = computed(() => {
 })
 
 function addRow() {
-  rows.value.push({ account_id: '', debit: '', credit: '' })
+  rows.value.push({ account_id: '', description: '', debit: '', credit: '' })
 }
 
 function removeRow(index) {
@@ -66,6 +59,7 @@ async function submitEntry() {
       fiscal_year_id: localStorage.getItem('fiscal_year_id'),
       items: rows.value.map((r) => ({
         account_id: r.account_id,
+        description: r.description,
         debit: parseFloat(r.debit) || 0,
         credit: parseFloat(r.credit) || 0,
       })),
@@ -119,6 +113,7 @@ onMounted(() => {
           >
             <tr>
               <th class="px-4 py-3 min-w-[200px]">Account</th>
+              <th class="px-4 py-3 min-w-[200px]">Line Description</th>
               <th class="px-4 py-3 w-40 text-right">Debit</th>
               <th class="px-4 py-3 w-40 text-right">Credit</th>
               <th class="px-4 py-3 w-16 text-center">Action</th>
@@ -129,9 +124,17 @@ onMounted(() => {
               <td class="px-4 py-2">
                 <SelectDropdown
                   v-model="row.account_id"
-                  :options="accountOptions"
+                  :options="store.accountOptions"
                   placeholder="Select Account"
                   class="w-full"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  v-model="row.description"
+                  placeholder="Line description (optional)"
+                  class="input-primary py-1"
                 />
               </td>
               <td class="px-4 py-2">
@@ -168,7 +171,7 @@ onMounted(() => {
           </tbody>
           <tfoot class="bg-gray-50 dark:bg-gray-700/50 font-bold text-gray-900 dark:text-white">
             <tr>
-              <td class="px-4 py-3 text-right">Totals</td>
+              <td colspan="2" class="px-4 py-3 text-right">Totals</td>
               <td
                 class="px-4 py-3 text-right"
                 :class="isBalanced ? 'text-green-600' : 'text-red-600'"

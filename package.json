@@ -10,6 +10,7 @@
     "dev": "vite",
     "host": "vite --host",
     "build": "vite build",
+    "deploy": "set VITE_BASE_PATH=accounting&& vite build --base=/accounting/ --outDir ../../accounting && copy ./src/assets/.htaccess ./../../accounting",
     "preview": "vite preview",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/"

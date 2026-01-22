@@ -194,20 +194,35 @@ watch(isOpen, (newVal) => {
 
         <!-- Options List -->
         <div class="max-h-64 overflow-y-auto py-1 custom-scrollbar">
-          <div
-            v-for="option in filteredOptions"
-            :key="option[valueKey]"
-            @click="selectOption(option)"
-            class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between hover:bg-primary-50 dark:hover:bg-primary-900/20 group"
-            :class="[
-              modelValue === option[valueKey]
-                ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                : 'text-gray-700 dark:text-gray-300',
-            ]"
-          >
-            <span class="truncate">{{ option[labelKey] }}</span>
-            <Check v-if="modelValue === option[valueKey]" class="w-4 h-4 text-primary-600" />
-          </div>
+          <template v-for="(option, index) in filteredOptions" :key="option[valueKey]">
+            <!-- Group Header -->
+            <div
+              v-if="
+                option.group && (index === 0 || filteredOptions[index - 1].group !== option.group)
+              "
+              class="px-4 py-2 text-sm font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wider bg-gray-50/50 dark:bg-gray-900/30"
+            >
+              {{ option.group }}
+            </div>
+
+            <div
+              @click="selectOption(option)"
+              class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between hover:bg-primary-50 dark:hover:bg-primary-900/20 group transition-colors"
+              :class="[
+                modelValue === option[valueKey]
+                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-gray-700 dark:text-gray-300',
+              ]"
+            >
+              <div class="flex flex-col truncate">
+                <span class="truncate">{{ option[labelKey] }}</span>
+                <span v-if="option.subtext" class="text-[10px] text-gray-400 truncate">{{
+                  option.subtext
+                }}</span>
+              </div>
+              <Check v-if="modelValue === option[valueKey]" class="w-4 h-4 text-primary-600" />
+            </div>
+          </template>
 
           <div
             v-if="filteredOptions.length === 0"
