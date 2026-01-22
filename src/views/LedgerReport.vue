@@ -1,11 +1,14 @@
 <script setup>
-import { Download, Printer, Search } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { Printer, Search } from 'lucide-vue-next'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
+const route = useRoute()
+const router = useRouter()
 
 const filters = ref({
   account_id: '',
@@ -15,7 +18,7 @@ const filters = ref({
 
 const reportData = ref(null)
 
-async function generateReport() {
+async function fetchData() {
   if (!filters.value.account_id) return
   try {
     reportData.value = await store.fetchLedger(
@@ -28,11 +31,45 @@ async function generateReport() {
   }
 }
 
+async function generateReport() {
+  // Update URL - this will trigger the watcher
+  router.push({
+    query: {
+      account_id: filters.value.account_id,
+      start_date: filters.value.start_date,
+      end_date: filters.value.end_date,
+    },
+  })
+}
+
+// Sync Route -> State
+function syncStateFromQuery() {
+  const query = route.query
+  if (query.account_id) {
+    filters.value.account_id = query.account_id
+    filters.value.start_date = query.start_date || filters.value.start_date
+    filters.value.end_date = query.end_date || filters.value.end_date
+    return true
+  }
+  return false
+}
+
 // Helpers
 const formatCurrency = (val) => Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })
 
-onMounted(() => {
-  store.fetchAccounts()
+watch(
+  () => route.query,
+  () => {
+    syncStateFromQuery()
+    fetchData()
+  },
+)
+
+onMounted(async () => {
+  await store.fetchAccounts()
+  if (syncStateFromQuery()) {
+    fetchData()
+  }
 })
 </script>
 

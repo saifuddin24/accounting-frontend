@@ -1,10 +1,13 @@
 <script setup>
 import { Printer, Search, TrendingDown, TrendingUp } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
+const route = useRoute()
+const router = useRouter()
 
 // Default to current month
 const now = new Date()
@@ -15,7 +18,7 @@ const startDate = ref(startOfMonth)
 const endDate = ref(endOfMonth)
 const reportData = ref(null)
 
-async function generateReport() {
+async function fetchData() {
   try {
     reportData.value = await store.fetchIncomeStatement(startDate.value, endDate.value)
   } catch (e) {
@@ -23,10 +26,40 @@ async function generateReport() {
   }
 }
 
+async function generateReport() {
+  // Sync to URL - triggers watcher
+  router.push({
+    query: {
+      start_date: startDate.value,
+      end_date: endDate.value,
+    },
+  })
+}
+
+// Sync Route -> State
+function syncStateFromQuery() {
+  const query = route.query
+  if (query.start_date || query.end_date) {
+    startDate.value = query.start_date || startDate.value
+    endDate.value = query.end_date || endDate.value
+    return true
+  }
+  return false
+}
+
 const formatCurrency = (val) => Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })
 
+watch(
+  () => route.query,
+  () => {
+    syncStateFromQuery()
+    fetchData()
+  },
+)
+
 onMounted(() => {
-  generateReport()
+  syncStateFromQuery()
+  fetchData()
 })
 </script>
 

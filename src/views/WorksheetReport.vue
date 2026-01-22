@@ -1,14 +1,17 @@
 <script setup>
-import { Layout, Printer, Search } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
+import { Printer, Search } from 'lucide-vue-next'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAccountingStore } from '../stores/accounting'
 
 const store = useAccountingStore()
+const route = useRoute()
+const router = useRouter()
 
 const asOfDate = ref(new Date().toISOString().slice(0, 10))
 const reportData = ref(null)
 
-async function generateReport() {
+async function fetchData() {
   try {
     reportData.value = await store.fetchWorksheet(asOfDate.value)
   } catch (e) {
@@ -16,11 +19,39 @@ async function generateReport() {
   }
 }
 
+async function generateReport() {
+  // Sync to URL - triggers watcher
+  router.push({
+    query: {
+      date: asOfDate.value,
+    },
+  })
+}
+
+// Sync Route -> State
+function syncStateFromQuery() {
+  const query = route.query
+  if (query.date) {
+    asOfDate.value = query.date
+    return true
+  }
+  return false
+}
+
 const formatCurrency = (val) =>
   val === 0 ? '-' : Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })
 
+watch(
+  () => route.query,
+  () => {
+    syncStateFromQuery()
+    fetchData()
+  },
+)
+
 onMounted(() => {
-  generateReport()
+  syncStateFromQuery()
+  fetchData()
 })
 </script>
 
