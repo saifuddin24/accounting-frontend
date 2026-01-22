@@ -157,6 +157,12 @@ onMounted(() => {
         <div class="text-sm text-gray-500">View and manage posted transactions</div>
       </div>
       <div class="flex gap-2">
+        <router-link
+          to="/journals/quick"
+          class="btn-primary bg-white text-primary-600 border border-primary-600 hover:bg-primary-50"
+        >
+          <Plus class="w-4 h-4" /> Quick Entry
+        </router-link>
         <router-link to="/journals/create" class="btn-primary">
           <Plus class="w-4 h-4" /> New Entry
         </router-link>

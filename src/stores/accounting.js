@@ -66,6 +66,20 @@ export const useAccountingStore = defineStore('accounting', () => {
       loading.value = false
     }
   }
+  
+  // Create a quick journal entry
+  async function createQuickJournalEntry(entryData) {
+    loading.value = true
+    try {
+      const data = await api.post('/api/v1/journals/quick', entryData)
+      return data
+    } catch (e) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
 
   // Fetch journals with optional query params
   async function fetchJournals(params = {}) {
@@ -241,6 +255,7 @@ export const useAccountingStore = defineStore('accounting', () => {
     fetchAccounts,
     createAccount,
     createJournalEntry,
+    createQuickJournalEntry,
     fetchJournals,
     fetchJournalEntry,
     deleteJournalEntry,

@@ -70,7 +70,53 @@ onMounted(async () => {
   if (syncStateFromQuery()) {
     fetchData()
   }
-})
+})[
+  ({
+    description: 'মাছ',
+    amount: 230,
+    type: 'debit',
+  },
+  {
+    description: 'পিয়াজ',
+    amount: 50,
+    type: 'debit',
+  },
+  {
+    description: 'ফুলকপি',
+    amount: 40,
+    type: 'debit',
+  },
+  {
+    description: 'গাজর',
+    amount: 20,
+    type: 'debit',
+  },
+  {
+    description: 'সিম',
+    amount: 10,
+    type: 'debit',
+  },
+  {
+    description: 'রুটি',
+    amount: 20,
+    type: 'debit',
+  },
+  {
+    description: 'কাচা কলা',
+    amount: 40,
+    type: 'debit',
+  },
+  {
+    description: 'বেগুন',
+    amount: 20,
+    type: 'debit',
+  },
+  {
+    description: 'পালং শাক',
+    amount: 20,
+    type: 'debit',
+  })
+]
 </script>
 
 <template>

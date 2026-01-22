@@ -25,6 +25,11 @@ const router = createRouter({
       component: () => import('../views/JournalEntryCreate.vue'),
     },
     {
+      path: '/journals/quick',
+      name: 'journals-quick',
+      component: () => import('../views/JournalQuickCreate.vue'),
+    },
+    {
       path: '/journals/:id',
       name: 'journals-show',
       component: () => import('../views/JournalEntryShow.vue'),
