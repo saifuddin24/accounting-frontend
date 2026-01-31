@@ -16,6 +16,8 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const sortBy = ref('date')
 const sortOrder = ref('desc')
+const startDate = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10))
+const endDate = ref(new Date().toISOString().slice(0, 10))
 
 // Data
 const detailedLines = ref([])
@@ -70,6 +72,8 @@ async function fetchData() {
     search: searchQuery.value,
     sort_by: sortBy.value,
     sort_order: sortOrder.value,
+    start_date: startDate.value,
+    end_date: endDate.value,
     per_page: 20,
   }
 
@@ -97,6 +101,9 @@ function syncStateFromQuery() {
   searchQuery.value = query.search || ''
   sortBy.value = query.sort || 'date'
   sortOrder.value = query.order || 'desc'
+  startDate.value =
+    query.start_date || new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10)
+  endDate.value = query.end_date || new Date().toISOString().slice(0, 10)
 }
 
 // Actions
@@ -108,7 +115,15 @@ function setViewMode(mode) {
 
 function handleSearch() {
   currentPage.value = 1
-  router.push({ query: { ...route.query, page: 1, search: searchQuery.value || undefined } })
+  router.push({
+    query: {
+      ...route.query,
+      page: 1,
+      search: searchQuery.value || undefined,
+      start_date: startDate.value,
+      end_date: endDate.value,
+    },
+  })
 }
 
 function handleSort(column) {
@@ -198,17 +213,31 @@ onMounted(() => {
       </div>
 
       <!-- Search -->
-      <div class="relative w-full md:w-64">
-        <Search class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          v-model.lazy="searchQuery"
-          @change="handleSearch"
-          @keyup.enter="handleSearch"
-          placeholder="Search description/ref..."
-          class="input-primary pl-10"
-        />
-        <div class="absolute -bottom-3 right-0 text-[10px] text-gray-400">
-          Press <span class="font-bold">Enter</span> to search
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-2">
+          <input type="date" v-model="startDate" class="input-primary py-1.5 text-sm" />
+          <span class="text-gray-400">-</span>
+          <input type="date" v-model="endDate" class="input-primary py-1.5 text-sm" />
+          <button
+            @click="handleSearch"
+            class="p-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+          >
+            <Search class="size-4" />
+          </button>
+        </div>
+
+        <div class="relative w-full md:w-64">
+          <Search class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            v-model.lazy="searchQuery"
+            @change="handleSearch"
+            @keyup.enter="handleSearch"
+            placeholder="Search description/ref..."
+            class="input-primary pl-10"
+          />
+          <div class="absolute -bottom-3 right-0 text-[10px] text-gray-400">
+            Press <span class="font-bold">Enter</span> to search
+          </div>
         </div>
       </div>
     </div>

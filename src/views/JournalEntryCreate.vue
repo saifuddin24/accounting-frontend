@@ -2,11 +2,15 @@
 import { PlusCircle, Save, Trash2 } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import FormAlert from '../components/ui/FormAlert.vue'
+import InputError from '../components/ui/InputError.vue'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
+import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 
 const store = useAccountingStore()
 const router = useRouter()
+const form = useForm()
 
 const entryDate = ref(new Date().toISOString().slice(0, 10))
 const description = ref('')
@@ -48,11 +52,11 @@ function handleCreditInput(row) {
 
 async function submitEntry() {
   if (!isBalanced.value) {
-    alert('Entry must be balanced!')
+    form.errorMessage.value = 'Entry must be balanced!'
     return
   }
 
-  try {
+  await form.submit(async () => {
     await store.createJournalEntry({
       date: entryDate.value,
       description: description.value,
@@ -64,13 +68,12 @@ async function submitEntry() {
         credit: parseFloat(r.credit) || 0,
       })),
     })
-    alert('Journal Entry Posted Successfully!')
 
-    // Redirect to List
-    router.push('/journals')
-  } catch (e) {
-    alert('Error: ' + e.message)
-  }
+    // Redirect to List after a short delay to show success message
+    setTimeout(() => {
+      router.push('/journals')
+    }, 1500)
+  })
 }
 
 onMounted(() => {
@@ -85,13 +88,22 @@ onMounted(() => {
       <div class="text-sm text-gray-500">Record financial transactions</div>
     </div>
 
+    <FormAlert :message="form.errorMessage.value" type="error" />
+    <FormAlert :message="form.successMessage.value" type="success" />
+
     <div class="card p-6 mb-6">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >Date</label
           >
-          <input type="date" v-model="entryDate" class="input-primary" />
+          <input
+            type="date"
+            v-model="entryDate"
+            class="input-primary"
+            :class="{ 'border-red-500 ring-red-500/20': form.errors.value.date }"
+          />
+          <InputError :message="form.errors.value.date" />
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -102,7 +114,9 @@ onMounted(() => {
             v-model="description"
             placeholder="e.g. Purchase of office supplies"
             class="input-primary"
+            :class="{ 'border-red-500 ring-red-500/20': form.errors.value.description }"
           />
+          <InputError :message="form.errors.value.description" />
         </div>
       </div>
 
@@ -127,7 +141,9 @@ onMounted(() => {
                   :options="store.accountOptions"
                   placeholder="Select Account"
                   class="w-full"
+                  :class="{ 'border-red-500': form.errors.value[`items.${index}.account_id`] }"
                 />
+                <InputError :message="form.errors.value[`items.${index}.account_id`]" />
               </td>
               <td class="px-4 py-2">
                 <input
@@ -135,7 +151,9 @@ onMounted(() => {
                   v-model="row.description"
                   placeholder="Line description (optional)"
                   class="input-primary py-1"
+                  :class="{ 'border-red-500': form.errors.value[`items.${index}.description`] }"
                 />
+                <InputError :message="form.errors.value[`items.${index}.description`]" />
               </td>
               <td class="px-4 py-2">
                 <input
@@ -210,11 +228,12 @@ onMounted(() => {
           </button>
           <button
             @click="submitEntry"
-            :disabled="!isBalanced"
+            :disabled="!isBalanced || form.processing.value"
             class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
-            <Save class="w-4 h-4" />
-            Post Entry
+            <span v-if="form.processing.value" class="animate-spin mr-2">⏳</span>
+            <Save v-else class="w-4 h-4" />
+            {{ form.processing.value ? 'Posting...' : 'Post Entry' }}
           </button>
         </div>
       </div>

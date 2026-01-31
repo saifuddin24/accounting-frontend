@@ -1,7 +1,10 @@
 <script setup>
 import { Plus } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
+import FormAlert from '../components/ui/FormAlert.vue'
+import InputError from '../components/ui/InputError.vue'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
+import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 
 const store = useAccountingStore()
@@ -13,6 +16,8 @@ const newAccount = ref({
   normal_balance: 'debit',
   is_restricted: false,
 })
+
+const form = useForm()
 
 const showForm = ref(false)
 
@@ -30,7 +35,7 @@ const balanceOptions = [
 ]
 
 async function createAccount() {
-  try {
+  await form.submit(async () => {
     await store.createAccount(newAccount.value)
     newAccount.value = {
       code: '',
@@ -39,10 +44,10 @@ async function createAccount() {
       normal_balance: 'debit',
       is_restricted: false,
     }
-    showForm.value = false
-  } catch (e) {
-    alert(e.message)
-  }
+    setTimeout(() => {
+      showForm.value = false
+    }, 1500)
+  })
 }
 
 onMounted(() => {
@@ -63,10 +68,20 @@ onMounted(() => {
     <!-- Add Form -->
     <div v-if="showForm" class="card p-6 mb-6 animate-fade-in">
       <h3 class="text-lg font-bold mb-4">New Account Details</h3>
+
+      <FormAlert :message="form.errorMessage.value" type="error" />
+      <FormAlert :message="form.successMessage.value" type="success" />
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
         <div>
           <label class="block text-sm font-medium mb-1">Code</label>
-          <input v-model="newAccount.code" placeholder="e.g. 1005" class="input-primary" />
+          <input
+            v-model="newAccount.code"
+            placeholder="e.g. 1005"
+            class="input-primary"
+            :class="{ 'border-red-500 ring-red-500/20': form.errors.value.code }"
+          />
+          <InputError :message="form.errors.value.code" />
         </div>
         <div class="lg:col-span-2">
           <label class="block text-sm font-medium mb-1">Account Name</label>
@@ -74,7 +89,9 @@ onMounted(() => {
             v-model="newAccount.name"
             placeholder="Bank Name / Expense Type"
             class="input-primary"
+            :class="{ 'border-red-500 ring-red-500/20': form.errors.value.name }"
           />
+          <InputError :message="form.errors.value.name" />
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Type</label>
@@ -107,7 +124,9 @@ onMounted(() => {
         <button @click="showForm = false" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-100">
           Cancel
         </button>
-        <button @click="createAccount" class="btn-primary">Save Account</button>
+        <button @click="createAccount" :disabled="form.processing.value" class="btn-primary">
+          {{ form.processing.value ? 'Saving...' : 'Save Account' }}
+        </button>
       </div>
     </div>
 

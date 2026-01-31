@@ -1,6 +1,8 @@
 <script setup>
 import { Building2, Calendar, Plus, X } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
+import InputError from '../components/ui/InputError.vue'
+import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
@@ -17,6 +19,9 @@ const activeFYId = ref(localStorage.getItem('fiscal_year_id'))
 const editingCompany = ref(null)
 const editingFY = ref(null)
 
+const companyForm = useForm()
+const fyForm = useForm()
+
 async function loadData() {
   isLoading.value = true
   try {
@@ -30,31 +35,31 @@ async function loadData() {
 }
 
 async function saveCompany() {
-  try {
+  await companyForm.submit(async () => {
     if (editingCompany.value.id) {
       await store.updateCompany(editingCompany.value.id, editingCompany.value)
     } else {
       await store.createCompany(editingCompany.value)
     }
-    editingCompany.value = null
     await loadData()
-  } catch (e) {
-    alert('Error saving company')
-  }
+    setTimeout(() => {
+      editingCompany.value = null
+    }, 1000)
+  })
 }
 
 async function saveFY() {
-  try {
+  await fyForm.submit(async () => {
     if (editingFY.value.id) {
       await store.updateFiscalYear(editingFY.value.id, editingFY.value)
     } else {
       await store.createFiscalYear(editingFY.value)
     }
-    editingFY.value = null
     await loadData()
-  } catch (e) {
-    alert('Error saving fiscal year')
-  }
+    setTimeout(() => {
+      editingFY.value = null
+    }, 1000)
+  })
 }
 
 function startEditCompany(company = null) {
@@ -173,14 +178,18 @@ onMounted(loadData)
             </button>
           </div>
           <div class="p-6 space-y-4">
+            <FormAlert :message="companyForm.errorMessage.value" type="error" />
+            <FormAlert :message="companyForm.successMessage.value" type="success" />
             <div>
               <label class="block text-sm font-medium mb-1">Company Name</label>
               <input
                 v-model="editingCompany.name"
                 type="text"
                 class="input-primary"
+                :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.name }"
                 placeholder="Enter name"
               />
+              <InputError :message="companyForm.errors.value.name" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -189,8 +198,10 @@ onMounted(loadData)
                   v-model="editingCompany.tax_id"
                   type="text"
                   class="input-primary"
+                  :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.tax_id }"
                   placeholder="e.g. 123456"
                 />
+                <InputError :message="companyForm.errors.value.tax_id" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Currency (ISO)</label>
@@ -198,8 +209,12 @@ onMounted(loadData)
                   v-model="editingCompany.currency_code"
                   type="text"
                   class="input-primary"
+                  :class="{
+                    'border-red-500 ring-red-500/20': companyForm.errors.value.currency_code,
+                  }"
                   placeholder="BDT"
                 />
+                <InputError :message="companyForm.errors.value.currency_code" />
               </div>
             </div>
             <div>
@@ -208,16 +223,20 @@ onMounted(loadData)
                 v-model="editingCompany.email"
                 type="email"
                 class="input-primary"
+                :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.email }"
                 placeholder="company@example.com"
               />
+              <InputError :message="companyForm.errors.value.email" />
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Address</label>
               <textarea
                 v-model="editingCompany.address"
                 class="input-primary h-20"
+                :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.address }"
                 placeholder="Street address..."
               ></textarea>
+              <InputError :message="companyForm.errors.value.address" />
             </div>
           </div>
           <div class="p-6 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
@@ -227,7 +246,13 @@ onMounted(loadData)
             >
               Cancel
             </button>
-            <button @click="saveCompany" class="btn-primary px-6">Save Changes</button>
+            <button
+              @click="saveCompany"
+              :disabled="companyForm.processing.value"
+              class="btn-primary px-6"
+            >
+              {{ companyForm.processing.value ? 'Saving...' : 'Save Changes' }}
+            </button>
           </div>
         </div>
       </div>
@@ -330,23 +355,39 @@ onMounted(loadData)
             </button>
           </div>
           <div class="p-6 space-y-4">
+            <FormAlert :message="fyForm.errorMessage.value" type="error" />
+            <FormAlert :message="fyForm.successMessage.value" type="success" />
             <div>
               <label class="block text-sm font-medium mb-1">Period Name</label>
               <input
                 v-model="editingFY.name"
                 type="text"
                 class="input-primary"
+                :class="{ 'border-red-500 ring-red-500/20': fyForm.errors.value.name }"
                 placeholder="e.g. FY 2025"
               />
+              <InputError :message="fyForm.errors.value.name" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Start Date</label>
-                <input v-model="editingFY.start_date" type="date" class="input-primary" />
+                <input
+                  v-model="editingFY.start_date"
+                  type="date"
+                  class="input-primary"
+                  :class="{ 'border-red-500 ring-red-500/20': fyForm.errors.value.start_date }"
+                />
+                <InputError :message="fyForm.errors.value.start_date" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">End Date</label>
-                <input v-model="editingFY.end_date" type="date" class="input-primary" />
+                <input
+                  v-model="editingFY.end_date"
+                  type="date"
+                  class="input-primary"
+                  :class="{ 'border-red-500 ring-red-500/20': fyForm.errors.value.end_date }"
+                />
+                <InputError :message="fyForm.errors.value.end_date" />
               </div>
             </div>
             <div class="flex items-center gap-3 py-2">
@@ -366,7 +407,9 @@ onMounted(loadData)
             >
               Cancel
             </button>
-            <button @click="saveFY" class="btn-primary px-6">Save Period</button>
+            <button @click="saveFY" :disabled="fyForm.processing.value" class="btn-primary px-6">
+              {{ fyForm.processing.value ? 'Saving...' : 'Save Period' }}
+            </button>
           </div>
         </div>
       </div>

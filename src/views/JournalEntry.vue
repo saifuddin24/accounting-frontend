@@ -1,15 +1,25 @@
 <script setup>
 import { FilePlus, History, List, PlusCircle, Save, Trash2 } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
+import FormAlert from '../components/ui/FormAlert.vue'
+import InputError from '../components/ui/InputError.vue'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
+import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
+const form = useForm()
 
 const activeTab = ref('new') // 'new', 'history', or 'detailed'
 const detailedLines = ref([])
 const journalLinesLoading = ref(false)
+
+// History Filtering
+const historyFilters = ref({
+  start_date: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
+  end_date: new Date().toISOString().slice(0, 10),
+})
 
 // =======================
 // NEW ENTRY LOGIC
@@ -55,11 +65,11 @@ function handleCreditInput(row) {
 
 async function submitEntry() {
   if (!isBalanced.value) {
-    alert('Entry must be balanced!')
+    form.errorMessage.value = 'Entry must be balanced!'
     return
   }
 
-  try {
+  await form.submit(async () => {
     await store.createJournalEntry({
       date: entryDate.value,
       description: description.value,
@@ -70,18 +80,18 @@ async function submitEntry() {
         credit: parseFloat(r.credit) || 0,
       })),
     })
-    alert('Journal Entry Posted Successfully!')
-    // Reset form
-    description.value = ''
-    rows.value = [
-      { account_id: '', description: '', debit: '', credit: '' },
-      { account_id: '', description: '', debit: '', credit: '' },
-    ]
-    // Switch to history to see it
-    setTab('history')
-  } catch (e) {
-    alert('Error: ' + e.message)
-  }
+
+    // Reset form after a delay
+    setTimeout(() => {
+      description.value = ''
+      rows.value = [
+        { account_id: '', description: '', debit: '', credit: '' },
+        { account_id: '', description: '', debit: '', credit: '' },
+      ]
+      setTab('history')
+      form.clearMessages()
+    }, 1500)
+  })
 }
 
 async function fetchJournalLines() {
@@ -96,10 +106,17 @@ async function fetchJournalLines() {
   }
 }
 
+async function fetchJournals() {
+  await store.fetchJournals({
+    start_date: historyFilters.value.start_date,
+    end_date: historyFilters.value.end_date,
+  })
+}
+
 function setTab(tab) {
   activeTab.value = tab
   if (tab === 'history') {
-    store.fetchJournals()
+    fetchJournals()
   } else if (tab === 'detailed') {
     fetchJournalLines()
   }
@@ -110,7 +127,7 @@ function setTab(tab) {
 // =======================
 onMounted(() => {
   store.fetchAccounts()
-  store.fetchJournals()
+  fetchJournals()
 })
 </script>
 
@@ -163,12 +180,21 @@ onMounted(() => {
 
     <!-- NEW ENTRY FORM -->
     <div v-if="activeTab === 'new'" class="card p-6 mb-6 animate-fade-in">
+      <FormAlert :message="form.errorMessage.value" type="error" />
+      <FormAlert :message="form.successMessage.value" type="success" />
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >Date</label
           >
-          <input type="date" v-model="entryDate" class="input-primary" />
+          <input
+            type="date"
+            v-model="entryDate"
+            class="input-primary"
+            :class="{ 'border-red-500 ring-red-500/20': form.errors.value.date }"
+          />
+          <InputError :message="form.errors.value.date" />
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -179,7 +205,9 @@ onMounted(() => {
             v-model="description"
             placeholder="e.g. Purchase of office supplies"
             class="input-primary"
+            :class="{ 'border-red-500 ring-red-500/20': form.errors.value.description }"
           />
+          <InputError :message="form.errors.value.description" />
         </div>
       </div>
 
@@ -204,7 +232,9 @@ onMounted(() => {
                   :options="store.accountOptions"
                   placeholder="Select Account"
                   class="w-full"
+                  :class="{ 'border-red-500': form.errors.value[`items.${index}.account_id`] }"
                 />
+                <InputError :message="form.errors.value[`items.${index}.account_id`]" />
               </td>
               <td class="px-4 py-2">
                 <input
@@ -212,7 +242,9 @@ onMounted(() => {
                   v-model="row.description"
                   placeholder="Line description (optional)"
                   class="input-primary py-1"
+                  :class="{ 'border-red-500': form.errors.value[`items.${index}.description`] }"
                 />
+                <InputError :message="form.errors.value[`items.${index}.description`]" />
               </td>
               <td class="px-4 py-2">
                 <input
@@ -281,69 +313,97 @@ onMounted(() => {
           <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
           <button
             @click="submitEntry"
-            :disabled="!isBalanced"
+            :disabled="!isBalanced || form.processing.value"
             class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save class="w-4 h-4" />
-            Post Entry
+            <span v-if="form.processing.value" class="animate-spin mr-2">⏳</span>
+            <Save v-else class="w-4 h-4" />
+            {{ form.processing.value ? 'Posting...' : 'Post Entry' }}
           </button>
         </div>
       </div>
     </div>
 
     <!-- HISTORY LIST -->
-    <div v-if="activeTab === 'history'" class="card overflow-x-auto animate-fade-in">
-      <table class="w-full text-left text-sm min-w-[600px] sm:min-w-0">
-        <thead
-          class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase font-semibold"
-        >
-          <tr>
-            <th class="px-6 py-3">Date</th>
-            <th class="px-6 py-3">Journal #</th>
-            <th class="px-6 py-3">Description</th>
-            <th class="px-6 py-3 text-right">Amount</th>
-            <th class="px-6 py-3 text-right">Status</th>
-            <th class="px-6 py-3"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-          <tr
-            v-for="entry in store.journals.data || store.journals"
-            :key="entry.id"
-            class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+    <div v-if="activeTab === 'history'" class="animate-fade-in space-y-6">
+      <!-- History Filters -->
+      <div class="card p-4">
+        <div class="flex flex-wrap items-end gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1"
+              >Start Date</label
+            >
+            <input type="date" v-model="historyFilters.start_date" class="input-primary py-1.5" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1"
+              >End Date</label
+            >
+            <input type="date" v-model="historyFilters.end_date" class="input-primary py-1.5" />
+          </div>
+          <button
+            @click="fetchJournals"
+            class="px-6 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-lg hover:bg-primary-600 dark:hover:bg-primary-50 transition-colors flex items-center gap-2"
           >
-            <td class="px-6 py-3 text-gray-500">{{ formatDate(entry.date) }}</td>
-            <td class="px-6 py-3 font-mono text-primary-600">{{ entry.entry_number }}</td>
-            <td class="px-6 py-3">{{ entry.description }}</td>
-            <td class="px-6 py-3 text-right font-medium">
-              {{
-                Number(entry.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })
-              }}
-            </td>
-            <td class="px-6 py-3 text-right">
-              <span
-                class="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 capitalize"
-              >
-                {{ entry.status }}
-              </span>
-            </td>
-            <td class="px-6 py-3 text-right">
-              <router-link
-                :to="`/journals/${entry.id}`"
-                class="text-primary-600 hover:text-primary-900 font-medium"
-              >
-                View
-              </router-link>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            <History class="w-4 h-4" />
+            Filter History
+          </button>
+        </div>
+      </div>
 
-      <div
-        v-if="!(store.journals.data?.length || store.journals.length)"
-        class="p-8 text-center text-gray-500"
-      >
-        No journal entries found.
+      <div class="card overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[600px] sm:min-w-0">
+          <thead
+            class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase font-semibold"
+          >
+            <tr>
+              <th class="px-6 py-3">Date</th>
+              <th class="px-6 py-3">Journal #</th>
+              <th class="px-6 py-3">Description</th>
+              <th class="px-6 py-3 text-right">Amount</th>
+              <th class="px-6 py-3 text-right">Status</th>
+              <th class="px-6 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <tr
+              v-for="entry in store.journals.data || store.journals"
+              :key="entry.id"
+              class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+            >
+              <td class="px-6 py-3 text-gray-500">{{ formatDate(entry.date) }}</td>
+              <td class="px-6 py-3 font-mono text-primary-600">{{ entry.entry_number }}</td>
+              <td class="px-6 py-3">{{ entry.description }}</td>
+              <td class="px-6 py-3 text-right font-medium">
+                {{
+                  Number(entry.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                }}
+              </td>
+              <td class="px-6 py-3 text-right">
+                <span
+                  class="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 capitalize"
+                >
+                  {{ entry.status }}
+                </span>
+              </td>
+              <td class="px-6 py-3 text-right">
+                <router-link
+                  :to="`/journals/${entry.id}`"
+                  class="text-primary-600 hover:text-primary-900 font-medium"
+                >
+                  View
+                </router-link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div
+          v-if="!(store.journals.data?.length || store.journals.length)"
+          class="p-8 text-center text-gray-500"
+        >
+          No journal entries found.
+        </div>
       </div>
     </div>
 

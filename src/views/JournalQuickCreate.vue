@@ -14,11 +14,15 @@ import {
 } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import FormAlert from '../components/ui/FormAlert.vue'
+import InputError from '../components/ui/InputError.vue'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
+import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 
 const store = useAccountingStore()
 const router = useRouter()
+const form = useForm()
 
 // Stepper state
 const currentStep = ref(1)
@@ -171,7 +175,7 @@ const isValid = computed(() => {
 async function submitEntry() {
   if (!isValid.value) return
 
-  try {
+  await form.submit(async () => {
     await store.createQuickJournalEntry({
       date: entryDate.value,
       description: mainDescription.value,
@@ -196,11 +200,12 @@ async function submitEntry() {
         type: item.type,
       })),
     })
-    alert('Journal Entry Created Successfully!')
-    router.push('/journals')
-  } catch (e) {
-    alert('Error: ' + e.message)
-  }
+
+    // Redirect to List after a short delay to show success message
+    setTimeout(() => {
+      router.push('/journals')
+    }, 1500)
+  })
 }
 
 onMounted(() => {
@@ -364,6 +369,9 @@ onMounted(() => {
         </div>
       </div>
 
+      <FormAlert :message="form.errorMessage.value" type="error" />
+      <FormAlert :message="form.successMessage.value" type="success" />
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Form -->
         <div class="lg:col-span-2 space-y-6">
@@ -373,7 +381,13 @@ onMounted(() => {
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
                   >Transaction Date</label
                 >
-                <input type="date" v-model="entryDate" class="input-primary" />
+                <input
+                  type="date"
+                  v-model="entryDate"
+                  class="input-primary"
+                  :class="{ 'border-red-500 ring-red-500/20': form.errors.value.date }"
+                />
+                <InputError :message="form.errors.value.date" />
               </div>
               <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
@@ -383,8 +397,10 @@ onMounted(() => {
                   type="text"
                   v-model="mainDescription"
                   class="input-primary"
+                  :class="{ 'border-red-500 ring-red-500/20': form.errors.value.description }"
                   placeholder="e.g. Purchase of Assets"
                 />
+                <InputError :message="form.errors.value.description" />
               </div>
             </div>
 
@@ -584,6 +600,12 @@ onMounted(() => {
                         v-model="item.account_id"
                         :options="store.accountOptions"
                         placeholder="Search for Bank, Cash or Payable account..."
+                        :class="{
+                          'border-red-500': form.errors.value[`opposite_items.${index}.account_id`],
+                        }"
+                      />
+                      <InputError
+                        :message="form.errors.value[`opposite_items.${index}.account_id`]"
                       />
                     </div>
                     <div class="sm:col-span-4">
@@ -700,8 +722,9 @@ onMounted(() => {
                     class="absolute inset-0 bg-primary-600 w-0 group-hover:w-full transition-all duration-300"
                   ></div>
                   <div class="relative flex items-center justify-center gap-2">
-                    <Save class="w-5 h-5" />
-                    RECORD TRANSACTION
+                    <span v-if="form.processing.value" class="animate-spin mr-2">⏳</span>
+                    <Save v-else class="w-5 h-5" />
+                    {{ form.processing.value ? 'RECORDING...' : 'RECORD TRANSACTION' }}
                   </div>
                 </button>
                 <p class="text-[10px] text-center text-gray-400 mt-4 leading-relaxed">
