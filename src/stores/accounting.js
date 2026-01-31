@@ -110,6 +110,20 @@ export const useAccountingStore = defineStore('accounting', () => {
     }
   }
 
+  // Update a journal entry
+  async function updateJournalEntry(id, entryData) {
+    loading.value = true
+    try {
+      const data = await api.put(`/api/v1/journals/${id}`, entryData)
+      return data
+    } catch (e) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Delete a journal entry
   async function deleteJournalEntry(id) {
     loading.value = true
@@ -138,10 +152,10 @@ export const useAccountingStore = defineStore('accounting', () => {
   }
 
   // Fetch ledger report
-  async function fetchLedger(accountId, startDate, endDate) {
+  async function fetchLedger(accountId, params = {}) {
     loading.value = true
     try {
-      const query = new URLSearchParams({ start_date: startDate, end_date: endDate }).toString()
+      const query = new URLSearchParams(params).toString()
       return await api.get(`/api/v1/reports/ledger/${accountId}?${query}`)
     } catch (e) {
       error.value = e.message
@@ -258,6 +272,7 @@ export const useAccountingStore = defineStore('accounting', () => {
     createQuickJournalEntry,
     fetchJournals,
     fetchJournalEntry,
+    updateJournalEntry,
     deleteJournalEntry,
     fetchJournalLines,
     fetchLedger,

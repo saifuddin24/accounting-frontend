@@ -118,8 +118,16 @@ onMounted(() => {
             class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <td class="px-6 py-3 text-gray-500 font-mono">{{ line.account_code }}</td>
-            <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
-              {{ line.account_name }}
+            <td class="px-6 py-3">
+              <router-link
+                :to="{
+                  name: 'reports',
+                  query: { account_id: line.account_id, end_date: reportData.as_of },
+                }"
+                class="font-medium text-primary-600 hover:underline cursor-pointer"
+              >
+                {{ line.account_name }}
+              </router-link>
             </td>
             <td class="px-6 py-3 text-right">
               {{ line.debit ? formatCurrency(line.debit) : '-' }}

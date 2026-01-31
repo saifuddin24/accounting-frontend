@@ -44,7 +44,7 @@ const dropdownStyle = ref({
 })
 
 const selectedOption = computed(() =>
-  props.options.find((opt) => opt[props.valueKey] === props.modelValue),
+  props.options.find((opt) => opt[props.valueKey] == props.modelValue),
 )
 
 const filteredOptions = computed(() => {
@@ -209,7 +209,7 @@ watch(isOpen, (newVal) => {
               @click="selectOption(option)"
               class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between hover:bg-primary-50 dark:hover:bg-primary-900/20 group transition-colors"
               :class="[
-                modelValue === option[valueKey]
+                modelValue == option[valueKey]
                   ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                   : 'text-gray-700 dark:text-gray-300',
               ]"
@@ -220,7 +220,7 @@ watch(isOpen, (newVal) => {
                   option.subtext
                 }}</span>
               </div>
-              <Check v-if="modelValue === option[valueKey]" class="w-4 h-4 text-primary-600" />
+              <Check v-if="modelValue == option[valueKey]" class="w-4 h-4 text-primary-600" />
             </div>
           </template>
 

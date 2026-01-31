@@ -1,5 +1,5 @@
 <script setup>
-import { Printer, Search } from 'lucide-vue-next'
+import { ArrowUpDown, Printer, Search } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
@@ -14,6 +14,8 @@ const filters = ref({
   account_id: '',
   start_date: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10), // Jan 1st
   end_date: new Date().toISOString().slice(0, 10),
+  sort_by: 'date',
+  sort_order: 'desc',
 })
 
 const reportData = ref(null)
@@ -21,11 +23,12 @@ const reportData = ref(null)
 async function fetchData() {
   if (!filters.value.account_id) return
   try {
-    reportData.value = await store.fetchLedger(
-      filters.value.account_id,
-      filters.value.start_date,
-      filters.value.end_date,
-    )
+    reportData.value = await store.fetchLedger(filters.value.account_id, {
+      start_date: filters.value.start_date,
+      end_date: filters.value.end_date,
+      sort_by: filters.value.sort_by,
+      sort_order: filters.value.sort_order,
+    })
   } catch (e) {
     // Error handled in store
   }
@@ -38,8 +41,20 @@ async function generateReport() {
       account_id: filters.value.account_id,
       start_date: filters.value.start_date,
       end_date: filters.value.end_date,
+      sort: filters.value.sort_by,
+      order: filters.value.sort_order,
     },
   })
+}
+
+function handleSort(column) {
+  if (filters.value.sort_by === column) {
+    filters.value.sort_order = filters.value.sort_order === 'asc' ? 'desc' : 'asc'
+  } else {
+    filters.value.sort_by = column
+    filters.value.sort_order = 'desc'
+  }
+  generateReport()
 }
 
 // Sync Route -> State
@@ -49,6 +64,8 @@ function syncStateFromQuery() {
     filters.value.account_id = query.account_id
     filters.value.start_date = query.start_date || filters.value.start_date
     filters.value.end_date = query.end_date || filters.value.end_date
+    filters.value.sort_by = query.sort || filters.value.sort_by
+    filters.value.sort_order = query.order || filters.value.sort_order
     return true
   }
   return false
@@ -70,53 +87,7 @@ onMounted(async () => {
   if (syncStateFromQuery()) {
     fetchData()
   }
-})[
-  ({
-    description: 'মাছ',
-    amount: 230,
-    type: 'debit',
-  },
-  {
-    description: 'পিয়াজ',
-    amount: 50,
-    type: 'debit',
-  },
-  {
-    description: 'ফুলকপি',
-    amount: 40,
-    type: 'debit',
-  },
-  {
-    description: 'গাজর',
-    amount: 20,
-    type: 'debit',
-  },
-  {
-    description: 'সিম',
-    amount: 10,
-    type: 'debit',
-  },
-  {
-    description: 'রুটি',
-    amount: 20,
-    type: 'debit',
-  },
-  {
-    description: 'কাচা কলা',
-    amount: 40,
-    type: 'debit',
-  },
-  {
-    description: 'বেগুন',
-    amount: 20,
-    type: 'debit',
-  },
-  {
-    description: 'পালং শাক',
-    amount: 20,
-    type: 'debit',
-  })
-]
+})
 </script>
 
 <template>
@@ -164,8 +135,16 @@ onMounted(async () => {
         class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/30"
       >
         <div>
-          <h2 class="text-xl font-bold text-primary-700 dark:text-primary-400">
+          <h2
+            class="text-xl font-bold text-primary-700 dark:text-primary-400 flex items-center gap-2"
+          >
             {{ reportData.account.name }}
+            <span
+              v-if="reportData.account.is_restricted"
+              class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold uppercase"
+            >
+              Restricted
+            </span>
           </h2>
           <p class="text-sm text-gray-500">
             Code: {{ reportData.account.code }} | Period:
@@ -191,12 +170,40 @@ onMounted(async () => {
           class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase font-semibold"
         >
           <tr>
-            <th class="px-6 py-3">Date</th>
+            <th
+              @click="handleSort('date')"
+              class="px-6 py-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <div class="flex items-center gap-1">
+                Date <ArrowUpDown class="w-4 h-4 text-gray-400" />
+              </div>
+            </th>
             <th class="px-6 py-3">Ref #</th>
-            <th class="px-6 py-3">Opposite Account</th>
+            <th
+              @click="handleSort('opposite_account')"
+              class="px-6 py-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <div class="flex items-center gap-1">
+                Opposite Account <ArrowUpDown class="w-4 h-4 text-gray-400" />
+              </div>
+            </th>
             <th class="px-6 py-3">Description</th>
-            <th class="px-6 py-3 text-right">Debit</th>
-            <th class="px-6 py-3 text-right">Credit</th>
+            <th
+              @click="handleSort('debit')"
+              class="px-6 py-3 text-right cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <div class="flex items-center justify-end gap-1">
+                Debit <ArrowUpDown class="w-4 h-4 text-gray-400" />
+              </div>
+            </th>
+            <th
+              @click="handleSort('credit')"
+              class="px-6 py-3 text-right cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <div class="flex items-center justify-end gap-1">
+                Credit <ArrowUpDown class="w-4 h-4 text-gray-400" />
+              </div>
+            </th>
             <th class="px-6 py-3 text-right bg-gray-200 dark:bg-gray-600">Balance</th>
           </tr>
         </thead>
@@ -218,8 +225,13 @@ onMounted(async () => {
             class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <td class="px-6 py-3 text-gray-500">{{ formatDate(line.date) }}</td>
-            <td class="px-6 py-3 text-primary-600 cursor-pointer hover:underline">
-              {{ line.entry_number }}
+            <td class="px-6 py-3">
+              <router-link
+                :to="`/journals/${line.journal_entry_id}`"
+                class="text-primary-600 hover:underline cursor-pointer font-medium"
+              >
+                {{ line.entry_number }}
+              </router-link>
             </td>
             <td class="px-6 py-3 italic text-gray-600 dark:text-gray-400">
               {{ line.opposite_account }}

@@ -11,6 +11,7 @@ const newAccount = ref({
   name: '',
   type: 'Asset',
   normal_balance: 'debit',
+  is_restricted: false,
 })
 
 const showForm = ref(false)
@@ -31,7 +32,13 @@ const balanceOptions = [
 async function createAccount() {
   try {
     await store.createAccount(newAccount.value)
-    newAccount.value = { code: '', name: '', type: 'Asset', normal_balance: 'debit' }
+    newAccount.value = {
+      code: '',
+      name: '',
+      type: 'Asset',
+      normal_balance: 'debit',
+      is_restricted: false,
+    }
     showForm.value = false
   } catch (e) {
     alert(e.message)
@@ -85,6 +92,16 @@ onMounted(() => {
             placeholder="Select Balance"
           />
         </div>
+        <div v-if="newAccount.type === 'Asset'" class="flex items-center pb-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="newAccount.is_restricted"
+              class="w-4 h-4 rounded border-gray-300 text-primary-600"
+            />
+            <span class="text-sm font-medium text-gray-700">Restricted Cash?</span>
+          </label>
+        </div>
       </div>
       <div class="mt-4 flex justify-end gap-2">
         <button @click="showForm = false" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-100">
@@ -116,7 +133,19 @@ onMounted(() => {
             class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
           >
             <td class="px-6 py-3 font-mono text-gray-500">{{ acc.code }}</td>
-            <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">{{ acc.name }}</td>
+            <td class="px-6 py-3 font-medium">
+              <router-link
+                :to="{ name: 'reports', query: { account_id: acc.id } }"
+                class="text-primary-600 hover:underline cursor-pointer"
+              >
+                {{ acc.name }}
+              </router-link>
+              <span
+                v-if="acc.is_restricted"
+                class="ml-2 px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold uppercase"
+                >Restricted</span
+              >
+            </td>
             <td class="px-6 py-3">
               <span
                 :class="{

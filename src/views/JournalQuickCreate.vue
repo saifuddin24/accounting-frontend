@@ -29,6 +29,7 @@ const selectedAccount = ref(null)
 const entryDate = ref(new Date().toISOString().slice(0, 10))
 const mainDescription = ref('')
 const mainAccountItems = ref([{ description: '', amount: '', type: 'debit' }])
+const otherItems = ref([])
 const oppositeItems = ref([{ account_id: '', description: '', amount: '', type: 'credit' }])
 
 const accountTypes = [
@@ -120,6 +121,19 @@ function removeMainRow(index) {
   }
 }
 
+function addOtherRow() {
+  otherItems.value.push({
+    account_id: '',
+    description: mainDescription.value,
+    amount: '',
+    type: mainAccountItems.value[0].type,
+  })
+}
+
+function removeOtherRow(index) {
+  otherItems.value.splice(index, 1)
+}
+
 function addOppositeRow() {
   oppositeItems.value.push({
     account_id: '',
@@ -136,7 +150,12 @@ function removeOppositeRow(index) {
 }
 
 const totalMainAmount = computed(() => {
-  return mainAccountItems.value.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+  const mainTotal = mainAccountItems.value.reduce(
+    (sum, item) => sum + (parseFloat(item.amount) || 0),
+    0,
+  )
+  const otherTotal = otherItems.value.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+  return mainTotal + otherTotal
 })
 
 const isValid = computed(() => {
@@ -144,6 +163,7 @@ const isValid = computed(() => {
     mainDescription.value &&
     mainAccountItems.value.length > 0 &&
     mainAccountItems.value.every((item) => (parseFloat(item.amount) || 0) > 0) &&
+    otherItems.value.every((item) => item.account_id && (parseFloat(item.amount) || 0) > 0) &&
     oppositeItems.value.every((item) => item.account_id)
   )
 })
@@ -156,11 +176,19 @@ async function submitEntry() {
       date: entryDate.value,
       description: mainDescription.value,
       main_account_id: selectedAccount.value.id,
-      main_account_items: mainAccountItems.value.map((item) => ({
-        description: item.description || mainDescription.value,
-        amount: parseFloat(item.amount),
-        type: item.type,
-      })),
+      main_account_items: [
+        ...mainAccountItems.value.map((item) => ({
+          description: item.description || mainDescription.value,
+          amount: parseFloat(item.amount),
+          type: item.type,
+        })),
+        ...otherItems.value.map((item) => ({
+          account_id: item.account_id,
+          description: item.description || mainDescription.value,
+          amount: parseFloat(item.amount),
+          type: item.type,
+        })),
+      ],
       opposite_items: oppositeItems.value.map((item, idx) => ({
         account_id: item.account_id,
         description: item.description || mainDescription.value,
@@ -370,12 +398,6 @@ onMounted(() => {
                     {{ selectedAccount.name }} Lines (Mandatory)
                   </h3>
                 </div>
-                <button
-                  @click="addMainRow"
-                  class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors border border-primary-600/20"
-                >
-                  <PlusCircle class="w-4 h-4" /> ADD LINE
-                </button>
               </div>
 
               <div class="space-y-3">
@@ -426,6 +448,100 @@ onMounted(() => {
                         <Trash2 class="w-4 h-4" />
                       </button>
                     </div>
+                  </div>
+                </div>
+
+                <!-- Add Main Line Button Moved to Bottom -->
+                <div class="flex justify-end pt-2">
+                  <button
+                    @click="addMainRow"
+                    class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors border border-primary-600/20"
+                  >
+                    <PlusCircle class="w-4 h-4" /> ADD LINE
+                  </button>
+                </div>
+              </div>
+
+              <!-- Other Transactions Section -->
+              <div class="pt-6 space-y-6">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                    <h3
+                      class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest"
+                    >
+                      Other transactions (Primary side)
+                    </h3>
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div
+                    v-for="(item, index) in otherItems"
+                    :key="'other-' + index"
+                    class="relative group animate-fade-in"
+                  >
+                    <div
+                      class="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 rounded-xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/20 hover:border-indigo-200 transition-all shadow-sm"
+                    >
+                      <div class="sm:col-span-4">
+                        <label class="text-[10px] font-black text-gray-400 uppercase mb-1 block"
+                          >Account</label
+                        >
+                        <SelectDropdown
+                          v-model="item.account_id"
+                          :options="store.accountOptions"
+                          placeholder="Select Account"
+                        />
+                      </div>
+                      <div class="sm:col-span-4">
+                        <label class="text-[10px] font-black text-gray-400 uppercase mb-1 block"
+                          >Description</label
+                        >
+                        <input
+                          type="text"
+                          v-model="item.description"
+                          class="input-primary text-sm py-1.5"
+                          placeholder="Detail for this line"
+                        />
+                      </div>
+                      <div class="sm:col-span-3">
+                        <label class="text-[10px] font-black text-gray-400 uppercase mb-1 block"
+                          >Amount</label
+                        >
+                        <div class="relative">
+                          <input
+                            type="number"
+                            v-model="item.amount"
+                            step="0.01"
+                            class="input-primary text-sm py-1.5 pr-12 font-bold"
+                            placeholder="0.00"
+                          />
+                          <span
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 uppercase"
+                          >
+                            {{ item.type === 'debit' ? 'DR' : 'CR' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="sm:col-span-1 flex items-end justify-center">
+                        <button
+                          @click="removeOtherRow(index)"
+                          class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-end pt-2">
+                    <button
+                      @click="addOtherRow"
+                      class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors border border-indigo-600/20"
+                    >
+                      <PlusCircle class="w-4 h-4" /> ADD OTHER LINE
+                    </button>
                   </div>
                 </div>
               </div>
@@ -524,9 +640,12 @@ onMounted(() => {
                     >Primary Side</span
                   >
                   <div class="flex justify-between items-baseline">
-                    <span class="font-bold text-gray-900 dark:text-white truncate max-w-[150px]">{{
-                      selectedAccount.name
-                    }}</span>
+                    <span class="font-bold text-gray-900 dark:text-white truncate max-w-[150px]">
+                      {{ selectedAccount.name }}
+                      <span v-if="otherItems.length > 0" class="text-xs text-gray-400 font-normal">
+                        (+{{ otherItems.length }} others)
+                      </span>
+                    </span>
                     <span class="font-black text-lg text-primary-600">
                       {{
                         (totalMainAmount || 0).toLocaleString(undefined, {

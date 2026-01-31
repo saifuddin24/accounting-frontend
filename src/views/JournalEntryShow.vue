@@ -1,6 +1,6 @@
 <script setup>
-import { ArrowLeft, Calendar, FileText, Hash, Trash2 } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
+import { ArrowLeft, Calendar, Check, Edit2, FileText, Hash, Trash2, X } from 'lucide-vue-next'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
@@ -12,6 +12,11 @@ const store = useAccountingStore()
 const entry = ref(null)
 const loading = ref(true)
 
+const isEditingDate = ref(false)
+const editDateValue = ref('')
+const dateInput = ref(null)
+const isSaving = ref(false)
+
 async function loadEntry() {
   loading.value = true
   try {
@@ -22,6 +27,34 @@ async function loadEntry() {
     router.push('/journals')
   } finally {
     loading.value = false
+  }
+}
+
+async function startEditingDate() {
+  const dateStr = entry.value.date
+  editDateValue.value = dateStr ? dateStr.substring(0, 10) : ''
+  isEditingDate.value = true
+  await nextTick()
+  dateInput.value?.focus()
+}
+
+function cancelEditingDate() {
+  isEditingDate.value = false
+}
+
+async function saveDate() {
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    const updated = await store.updateJournalEntry(entry.value.id, { date: editDateValue.value })
+    entry.value.date = updated.date
+    isEditingDate.value = false
+  } catch (e) {
+    console.error(e)
+    const errorMsg = e.response?.data?.error || e.message || 'Error updating date'
+    alert('Error updating date: ' + errorMsg)
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -80,10 +113,57 @@ onMounted(() => {
                 {{ entry.entry_number }}
               </h1>
             </div>
-            <p class="text-gray-500 flex items-center gap-2">
-              <Calendar class="w-4 h-4" />
-              {{ formatDate(entry.date) }}
-            </p>
+            <div class="flex items-center gap-2 min-h-[40px]">
+              <Calendar class="w-4 h-4 text-gray-400 shrink-0" />
+              <template v-if="!isEditingDate">
+                <div
+                  @click="startEditingDate"
+                  class="group flex items-center gap-2 cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/10 px-2 py-1 -ml-2 rounded-lg transition-all"
+                  title="Click to edit date"
+                >
+                  <span class="text-gray-600 dark:text-gray-400 font-medium">{{
+                    formatDate(entry.date)
+                  }}</span>
+                  <Edit2
+                    class="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  />
+                </div>
+              </template>
+              <div
+                v-else
+                class="flex items-center gap-2 animate-in fade-in slide-in-from-left-1 duration-200"
+              >
+                <input
+                  ref="dateInput"
+                  v-model="editDateValue"
+                  type="date"
+                  :disabled="isSaving"
+                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+                  @keyup.enter="saveDate"
+                  @keyup.esc="cancelEditingDate"
+                />
+                <button
+                  @click="saveDate"
+                  :disabled="isSaving"
+                  class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-all disabled:opacity-50"
+                  title="Save changes"
+                >
+                  <Check v-if="!isSaving" class="w-4 h-4" />
+                  <div
+                    v-else
+                    class="w-4 h-4 animate-spin border-2 border-green-600 border-t-transparent rounded-full"
+                  ></div>
+                </button>
+                <button
+                  @click="cancelEditingDate"
+                  :disabled="isSaving"
+                  class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all disabled:opacity-50"
+                  title="Cancel"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
           <div class="flex gap-3">
             <button
@@ -144,8 +224,16 @@ onMounted(() => {
                 class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
               >
                 <td class="px-6 py-4">
-                  <div class="font-semibold text-gray-900 dark:text-gray-100">
-                    {{ item.account.name }}
+                  <div class="flex items-center gap-2">
+                    <div class="font-semibold text-gray-900 dark:text-gray-100">
+                      {{ item.account.name }}
+                    </div>
+                    <span
+                      v-if="item.account.is_restricted"
+                      class="px-1.5 py-0.5 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase"
+                    >
+                      Restricted
+                    </span>
                   </div>
                   <div class="text-xs text-primary-600 font-mono">{{ item.account.code }}</div>
                 </td>

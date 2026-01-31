@@ -90,9 +90,17 @@ onMounted(() => {
           <div
             v-for="asset in reportData.assets"
             :key="asset.account_code"
-            class="flex justify-between items-center text-sm"
+            class="flex justify-between items-start text-sm"
           >
-            <span class="text-gray-600 dark:text-gray-300">{{ asset.account_name }}</span>
+            <div>
+              <div class="text-gray-600 dark:text-gray-300">{{ asset.account_name }}</div>
+              <div
+                v-if="asset.restricted_amount > 0"
+                class="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase mt-0.5"
+              >
+                Restricted: {{ formatCurrency(asset.restricted_amount) }}
+              </div>
+            </div>
             <span class="font-medium text-gray-900 dark:text-white">{{
               formatCurrency(asset.amount)
             }}</span>
@@ -101,6 +109,24 @@ onMounted(() => {
         <div
           class="px-6 py-7 bg-blue-50/50 dark:bg-blue-900/10 mt-auto border-t border-blue-100 dark:border-blue-800"
         >
+          <!-- Breakdown Summary -->
+          <div class="mb-4 pb-4 border-b border-blue-100 dark:border-blue-800/40 space-y-2">
+            <div
+              class="flex justify-between text-[10px] text-gray-500 uppercase font-black tracking-widest"
+            >
+              <span>General Assets</span>
+              <span class="text-gray-900 dark:text-gray-300">{{
+                formatCurrency(reportData.total_general_assets)
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between text-[10px] text-orange-600 dark:text-orange-400 uppercase font-black tracking-widest"
+            >
+              <span>Restricted Assets</span>
+              <span>{{ formatCurrency(reportData.total_restricted_assets) }}</span>
+            </div>
+          </div>
+
           <div class="flex justify-between items-center font-bold text-lg">
             <span class="text-gray-900 dark:text-white">Total Assets</span>
             <span class="text-blue-600 dark:text-blue-400 underline decoration-double">{{
