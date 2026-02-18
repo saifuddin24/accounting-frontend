@@ -2,6 +2,7 @@
 import { ArrowLeft, Calendar, Check, Edit2, FileText, Hash, Trash2, X } from 'lucide-vue-next'
 import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SkeletonEntry from '../components/ui/SkeletonEntry.vue'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
@@ -91,12 +92,7 @@ onMounted(() => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="py-12 text-center text-gray-500">
-      <div
-        class="inline-block animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full mb-4"
-      ></div>
-      <p>Loading journal entry...</p>
-    </div>
+    <SkeletonEntry v-if="loading" />
 
     <template v-else-if="entry">
       <!-- Header Card -->

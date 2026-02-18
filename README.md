@@ -1,7 +1,7 @@
 # Simple Accounting Web
 
-**Version: 1.0.1**  
-**Required API Version: [1.0.1](https://github.com/saifuddin24/accounting-backend)**
+**Version: 1.0.2**  
+**Required API Version: [1.0.2](https://github.com/saifuddin24/accounting-backend)**
 
 This is the frontend for the Simple Accounting system. It's a modern web application built with Vue 3 and Vite.
 
@@ -29,6 +29,13 @@ For detailed installation and configuration instructions, please refer to the:
 - **Icons**: Lucide Vue Next
 
 ## Changelog
+
+### Version 1.0.2 (2026-02-18)
+
+- Added Skeleton loaders for better user experience during data fetching.
+- Improved various report views (Balance Sheet, Income Statement, Ledger, etc.).
+- Refactored Journal Quick Create and updated routing logic.
+- Optimized UI components and overall application performance.
 
 ### Version 1.0.1 (2026-01-31)
 

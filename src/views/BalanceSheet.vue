@@ -2,6 +2,7 @@
 import { Printer, Scale, Search } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SkeletonReport from '../components/ui/SkeletonReport.vue'
 import { useAccountingStore } from '../stores/accounting'
 
 const store = useAccountingStore()
@@ -73,8 +74,10 @@ onMounted(() => {
       </button>
     </div>
 
+    <SkeletonReport v-if="store.loading" layout="double" />
+
     <div
-      v-if="reportData"
+      v-else-if="reportData"
       class="grid grid-cols-1 lg:grid-cols-2 items-stretched gap-6 animate-fade-in"
     >
       <!-- Left Column: Assets -->

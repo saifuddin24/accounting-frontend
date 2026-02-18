@@ -2,6 +2,8 @@
 import { Building2, Calendar, Plus, X } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import InputError from '../components/ui/InputError.vue'
+import Skeleton from '../components/ui/Skeleton.vue'
+import SkeletonTable from '../components/ui/SkeletonTable.vue'
 import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
@@ -132,7 +134,19 @@ onMounted(loadData)
       </div>
 
       <div class="grid grid-cols-1 gap-4">
+        <template v-if="isLoading">
+          <div v-for="i in 2" :key="i" class="card p-5 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div class="space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+          </div>
+        </template>
         <div
+          v-else
           v-for="company in companies"
           :key="company.id"
           class="card p-5 flex justify-between items-center hover:shadow-md transition-shadow"
@@ -273,7 +287,8 @@ onMounted(loadData)
       </div>
 
       <div class="overflow-x-auto card">
-        <table class="w-full text-left text-sm min-w-[600px] sm:min-w-0">
+        <SkeletonTable v-if="isLoading" :rows="5" :cols="5" />
+        <table v-else class="w-full text-left text-sm min-w-[600px] sm:min-w-0">
           <thead
             class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase font-semibold"
           >

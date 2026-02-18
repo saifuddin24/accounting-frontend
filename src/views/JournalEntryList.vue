@@ -2,6 +2,7 @@
 import { ArrowUpDown, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SkeletonTable from '../components/ui/SkeletonTable.vue'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
@@ -243,11 +244,8 @@ onMounted(() => {
     </div>
 
     <!-- LOADING STATE -->
-    <div v-if="store.loading" class="py-12 text-center text-gray-500">
-      <div
-        class="inline-block animate-spin w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full mb-2"
-      ></div>
-      <p>Loading data...</p>
+    <div v-if="store.loading" class="card overflow-x-auto">
+      <SkeletonTable :rows="10" :cols="viewMode === 'summary' ? 6 : 5" />
     </div>
 
     <!-- SUMMARY VIEW -->

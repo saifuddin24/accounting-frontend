@@ -8,6 +8,8 @@ import {
   TrendingUp,
 } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
+import SkeletonCard from '../components/ui/SkeletonCard.vue'
+import SkeletonTable from '../components/ui/SkeletonTable.vue'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
@@ -116,11 +118,7 @@ onMounted(() => {
       </div>
     </div>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div
-        v-for="i in 4"
-        :key="i"
-        class="card p-6 h-32 animate-pulse bg-gray-50 dark:bg-gray-800/50"
-      ></div>
+      <SkeletonCard v-for="i in 4" :key="i" />
     </div>
 
     <!-- Fiscal Year Info -->
@@ -287,7 +285,8 @@ onMounted(() => {
         >
       </div>
       <div class="card overflow-x-auto">
-        <table class="w-full text-left text-sm min-w-[600px]">
+        <SkeletonTable v-if="recentJournals.length === 0 && !dashboardStats" :rows="5" :cols="5" />
+        <table v-else class="w-full text-left text-sm min-w-[600px]">
           <thead
             class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase text-xs font-semibold"
           >
@@ -323,7 +322,7 @@ onMounted(() => {
                 </span>
               </td>
             </tr>
-            <tr v-if="recentJournals.length === 0">
+            <tr v-if="recentJournals.length === 0 && dashboardStats">
               <td colspan="5" class="px-6 py-10 text-center text-gray-500">
                 No recent transactions found.
               </td>

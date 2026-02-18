@@ -12,15 +12,22 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import FormAlert from '../components/ui/FormAlert.vue'
 import InputError from '../components/ui/InputError.vue'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
 import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
+import {
+  buildQuickJournalPath,
+  normalizeTypeSlug,
+  slugify,
+  accountToSlug,
+} from '../utils/journalQuickRoute'
 
 const store = useAccountingStore()
+const route = useRoute()
 const router = useRouter()
 const form = useForm()
 
@@ -79,12 +86,22 @@ const filteredAccounts = computed(() => {
   return store.accounts.filter((acc) => acc.type === selectedType.value)
 })
 
-function selectType(type) {
+function selectType(type, options = {}) {
   selectedType.value = type
-  currentStep.value = 2
+  selectedAccount.value = null
+  currentStep.value = type ? 2 : 1
+
+  if (!options.skipRoute) {
+    if (!type) {
+      router.push('/journals/quick')
+      return
+    }
+    const path = buildQuickJournalPath(type)
+    if (path) router.push(path)
+  }
 }
 
-function selectAccount(account) {
+function selectAccount(account, options = {}) {
   selectedAccount.value = account
   if (!mainDescription.value) {
     mainDescription.value = `${account.name} Transaction`
@@ -109,6 +126,66 @@ function selectAccount(account) {
   ]
 
   currentStep.value = 3
+
+  if (!options.skipRoute) {
+    const path = buildQuickJournalPath(account.type, account)
+    if (path) router.push(path)
+  }
+}
+
+function goToStep1() {
+  selectType(null)
+}
+
+function goToStep2() {
+  if (!selectedType.value) {
+    goToStep1()
+    return
+  }
+  selectedAccount.value = null
+  currentStep.value = 2
+  const path = buildQuickJournalPath(selectedType.value)
+  if (path) router.push(path)
+}
+
+function syncFromRoute() {
+  const typeSlug = route.params.typeSlug
+  const accountSlug = route.params.accountSlug
+
+  if (!typeSlug) {
+    selectedType.value = null
+    selectedAccount.value = null
+    currentStep.value = 1
+    return
+  }
+
+  const normalizedType = normalizeTypeSlug(typeSlug)
+  if (!normalizedType) {
+    selectedType.value = null
+    selectedAccount.value = null
+    currentStep.value = 1
+    return
+  }
+
+  selectType(normalizedType, { skipRoute: true })
+
+  if (!accountSlug) {
+    selectedAccount.value = null
+    currentStep.value = 2
+    return
+  }
+
+  const normalizedAccountSlug = slugify(accountSlug)
+  const matchedAccount = store.accounts.find((acc) => {
+    return acc.type === normalizedType && accountToSlug(acc) === normalizedAccountSlug
+  })
+
+  if (matchedAccount) {
+    selectAccount(matchedAccount, { skipRoute: true })
+  } else {
+    selectedAccount.value = null
+    currentStep.value = 2
+  }
 }
 
 function addMainRow() {
@@ -211,6 +288,13 @@ async function submitEntry() {
 onMounted(() => {
   store.fetchAccounts()
 })
+
+watch(
+  () => [route.params.typeSlug, route.params.accountSlug, store.accounts.length],
+  () => {
+    syncFromRoute()
+  },
+)
 </script>
 
 <template>
@@ -308,7 +392,7 @@ onMounted(() => {
     <div v-if="currentStep === 2">
       <div class="flex items-center gap-4 mb-6">
         <button
-          @click="currentStep = 1"
+          @click="goToStep1"
           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           <ChevronLeft class="w-5 h-5" />
@@ -354,7 +438,7 @@ onMounted(() => {
     <div v-if="currentStep === 3">
       <div class="flex items-center gap-4 mb-6">
         <button
-          @click="currentStep = 2"
+          @click="goToStep2"
           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           <ChevronLeft class="w-5 h-5" />

@@ -2,6 +2,7 @@
 import { AlertOctagon, CheckCircle, Printer, Search } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SkeletonTable from '../components/ui/SkeletonTable.vue'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
@@ -75,7 +76,11 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="reportData" class="card overflow-x-auto animate-fade-in">
+    <div v-if="store.loading" class="card overflow-x-auto">
+      <SkeletonTable :rows="10" :cols="4" />
+    </div>
+
+    <div v-else-if="reportData" class="card overflow-x-auto animate-fade-in">
       <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
         <div class="flex justify-between items-center">
           <div>

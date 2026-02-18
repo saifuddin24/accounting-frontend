@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue'
 import FormAlert from '../components/ui/FormAlert.vue'
 import InputError from '../components/ui/InputError.vue'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
+import SkeletonTable from '../components/ui/SkeletonTable.vue'
 import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 
@@ -132,7 +133,7 @@ onMounted(() => {
 
     <!-- List -->
     <div class="card overflow-x-auto">
-      <div v-if="store.loading" class="p-8 text-center text-gray-500">Loading accounts...</div>
+      <SkeletonTable v-if="store.loading" :rows="8" :cols="5" />
       <table v-else class="w-full text-left min-w-[600px] sm:min-w-0">
         <thead
           class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase text-xs font-semibold"

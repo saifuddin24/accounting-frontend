@@ -25,7 +25,7 @@ const router = createRouter({
       component: () => import('../views/JournalEntryCreate.vue'),
     },
     {
-      path: '/journals/quick',
+      path: '/journals/quick/:typeSlug?/:accountSlug?',
       name: 'journals-quick',
       component: () => import('../views/JournalQuickCreate.vue'),
     },

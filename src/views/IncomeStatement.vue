@@ -2,6 +2,7 @@
 import { Printer, Search, TrendingDown, TrendingUp } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SkeletonReport from '../components/ui/SkeletonReport.vue'
 import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
@@ -86,8 +87,10 @@ onMounted(() => {
       </button>
     </div>
 
+    <SkeletonReport v-if="store.loading" layout="single" />
+
     <div
-      v-if="reportData"
+      v-else-if="reportData"
       class="card overflow-hidden animate-fade-in divide-y divide-gray-100 dark:divide-gray-700"
     >
       <!-- Header -->
