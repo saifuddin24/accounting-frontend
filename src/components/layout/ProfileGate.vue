@@ -3,37 +3,37 @@ import { api } from '@/utils/api'
 import { ArrowRight, Building2 } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
-const hasCompany = ref(!!localStorage.getItem('company_id'))
-const companies = ref([])
+const hasProfile = ref(!!localStorage.getItem('profile_id'))
+const profiles = ref([])
 const isLoading = ref(false)
 
-async function fetchCompanies() {
+async function fetchProfiles() {
   isLoading.value = true
   try {
-    companies.value = await api.get('/api/v1/companies')
+    profiles.value = await api.get('/api/v1/profiles')
   } catch (error) {
-    console.error('Failed to fetch companies:', error)
+    console.error('Failed to fetch profiles:', error)
   } finally {
     isLoading.value = false
   }
 }
 
-function selectCompany(id) {
-  localStorage.setItem('company_id', id)
-  hasCompany.value = true
-  window.location.reload() // Reload to ensure all services/components initialize with correct ID
+function selectProfile(id) {
+  localStorage.setItem('profile_id', id)
+  hasProfile.value = true
+  window.location.reload()
 }
 
 onMounted(() => {
-  if (!hasCompany.value) {
-    fetchCompanies()
+  if (!hasProfile.value) {
+    fetchProfiles()
   }
 })
 </script>
 
 <template>
   <div
-    v-if="!hasCompany"
+    v-if="!hasProfile"
     class="fixed inset-0 z-[100] bg-gray-50 dark:bg-dark-bg flex items-center justify-center p-6"
   >
     <div
@@ -47,7 +47,7 @@ onMounted(() => {
 
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome!</h1>
       <p class="text-gray-500 dark:text-gray-400 mb-8">
-        Please select a company to continue with your accounting.
+        Please select a profile to continue with your accounting.
       </p>
 
       <div v-if="isLoading" class="flex flex-col gap-4">
@@ -60,15 +60,15 @@ onMounted(() => {
 
       <div v-else class="flex flex-col gap-3">
         <button
-          v-for="company in companies"
-          :key="company.id"
-          @click="selectCompany(company.id)"
+          v-for="profile in profiles"
+          :key="profile.id"
+          @click="selectProfile(profile.id)"
           class="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all group"
         >
           <div class="text-left">
-            <p class="font-semibold text-gray-900 dark:text-white">{{ company.name }}</p>
+            <p class="font-semibold text-gray-900 dark:text-white">{{ profile.name }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ company.tax_id || 'No Tax ID' }}
+              {{ profile.tax_id || 'No Tax ID' }}
             </p>
           </div>
           <ArrowRight
@@ -76,8 +76,8 @@ onMounted(() => {
           />
         </button>
 
-        <div v-if="companies.length === 0 && !isLoading" class="py-4">
-          <p class="text-sm text-red-500">No companies found. Please contact administrator.</p>
+        <div v-if="profiles.length === 0 && !isLoading" class="py-4">
+          <p class="text-sm text-red-500">No profiles found. Please contact administrator.</p>
         </div>
       </div>
     </div>

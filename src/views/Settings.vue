@@ -9,25 +9,25 @@ import { useAccountingStore } from '../stores/accounting'
 import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
-const activeTab = ref('company')
+const activeTab = ref('profile')
 
-const companies = ref([])
+const profiles = ref([])
 const fiscalYears = ref([])
 const isLoading = ref(false)
-const activeCompanyId = ref(localStorage.getItem('company_id'))
+const activeProfileId = ref(localStorage.getItem('profile_id'))
 const activeFYId = ref(localStorage.getItem('fiscal_year_id'))
 
 // Selectors for editing
-const editingCompany = ref(null)
+const editingProfile = ref(null)
 const editingFY = ref(null)
 
-const companyForm = useForm()
+const profileForm = useForm()
 const fyForm = useForm()
 
 async function loadData() {
   isLoading.value = true
   try {
-    companies.value = await store.fetchCompanies()
+    profiles.value = await store.fetchProfiles()
     fiscalYears.value = await store.fetchFiscalYears()
   } catch (e) {
     console.error(e)
@@ -36,16 +36,16 @@ async function loadData() {
   }
 }
 
-async function saveCompany() {
-  await companyForm.submit(async () => {
-    if (editingCompany.value.id) {
-      await store.updateCompany(editingCompany.value.id, editingCompany.value)
+async function saveProfile() {
+  await profileForm.submit(async () => {
+    if (editingProfile.value.id) {
+      await store.updateProfile(editingProfile.value.id, editingProfile.value)
     } else {
-      await store.createCompany(editingCompany.value)
+      await store.createProfile(editingProfile.value)
     }
     await loadData()
     setTimeout(() => {
-      editingCompany.value = null
+      editingProfile.value = null
     }, 1000)
   })
 }
@@ -64,9 +64,9 @@ async function saveFY() {
   })
 }
 
-function startEditCompany(company = null) {
-  editingCompany.value = company
-    ? { ...company }
+function startEditProfile(profile = null) {
+  editingProfile.value = profile
+    ? { ...profile }
     : {
         name: '',
         tax_id: '',
@@ -95,21 +95,21 @@ onMounted(loadData)
   <div class="max-w-4xl mx-auto">
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
-      <p class="text-gray-500 dark:text-gray-400">Manage your companies and fiscal periods.</p>
+      <p class="text-gray-500 dark:text-gray-400">Manage your profiles and fiscal periods.</p>
     </div>
 
     <!-- Tabs -->
     <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-8">
       <button
-        @click="activeTab = 'company'"
+        @click="activeTab = 'profile'"
         :class="
-          activeTab === 'company'
+          activeTab === 'profile'
             ? 'border-primary-500 text-primary-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
         "
         class="pb-4 px-2 border-b-2 font-medium transition-colors"
       >
-        Companies
+        Profiles
       </button>
       <button
         @click="activeTab = 'fiscal'"
@@ -124,12 +124,12 @@ onMounted(loadData)
       </button>
     </div>
 
-    <!-- Company Settings -->
-    <div v-if="activeTab === 'company'" class="space-y-6 animate-fade-in">
+    <!-- Profile Settings -->
+    <div v-if="activeTab === 'profile'" class="space-y-6 animate-fade-in">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Registered Companies</h2>
-        <button @click="startEditCompany()" class="btn-primary py-2 px-4 text-sm">
-          <Plus class="w-4 h-4" /> Add Company
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Registered Profiles</h2>
+        <button @click="startEditProfile()" class="btn-primary py-2 px-4 text-sm">
+          <Plus class="w-4 h-4" /> Add Profile
         </button>
       </div>
 
@@ -147,8 +147,8 @@ onMounted(loadData)
         </template>
         <div
           v-else
-          v-for="company in companies"
-          :key="company.id"
+          v-for="profile in profiles"
+          :key="profile.id"
           class="card p-5 flex justify-between items-center hover:shadow-md transition-shadow"
         >
           <div class="flex items-center gap-4">
@@ -158,14 +158,14 @@ onMounted(loadData)
               <Building2 class="w-6 h-6 text-primary-600" />
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 dark:text-white">{{ company.name }}</h3>
+              <h3 class="font-bold text-gray-900 dark:text-white">{{ profile.name }}</h3>
               <p class="text-sm text-gray-500">
-                {{ company.email || 'No email set' }} • {{ company.currency_code }}
+                {{ profile.email || 'No email set' }} • {{ profile.currency_code }}
               </p>
             </div>
           </div>
           <button
-            @click="startEditCompany(company)"
+            @click="startEditProfile(profile)"
             class="text-primary-600 hover:text-primary-700 text-sm font-medium"
           >
             Edit
@@ -173,9 +173,9 @@ onMounted(loadData)
         </div>
       </div>
 
-      <!-- Company Modal -->
+      <!-- Profile Modal -->
       <div
-        v-if="editingCompany"
+        v-if="editingProfile"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       >
         <div
@@ -185,87 +185,87 @@ onMounted(loadData)
             class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center"
           >
             <h3 class="text-lg font-bold">
-              {{ editingCompany.id ? 'Edit Company' : 'New Company' }}
+              {{ editingProfile.id ? 'Edit Profile' : 'New Profile' }}
             </h3>
-            <button @click="editingCompany = null" class="text-gray-400 hover:text-gray-600">
+            <button @click="editingProfile = null" class="text-gray-400 hover:text-gray-600">
               <X class="w-5 h-5" />
             </button>
           </div>
           <div class="p-6 space-y-4">
-            <FormAlert :message="companyForm.errorMessage.value" type="error" />
-            <FormAlert :message="companyForm.successMessage.value" type="success" />
+            <FormAlert :message="profileForm.errorMessage.value" type="error" />
+            <FormAlert :message="profileForm.successMessage.value" type="success" />
             <div>
-              <label class="block text-sm font-medium mb-1">Company Name</label>
+              <label class="block text-sm font-medium mb-1">Profile Name</label>
               <input
-                v-model="editingCompany.name"
+                v-model="editingProfile.name"
                 type="text"
                 class="input-primary"
-                :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.name }"
+                :class="{ 'border-red-500 ring-red-500/20': profileForm.errors.value.name }"
                 placeholder="Enter name"
               />
-              <InputError :message="companyForm.errors.value.name" />
+              <InputError :message="profileForm.errors.value.name" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Tax ID</label>
                 <input
-                  v-model="editingCompany.tax_id"
+                  v-model="editingProfile.tax_id"
                   type="text"
                   class="input-primary"
-                  :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.tax_id }"
+                  :class="{ 'border-red-500 ring-red-500/20': profileForm.errors.value.tax_id }"
                   placeholder="e.g. 123456"
                 />
-                <InputError :message="companyForm.errors.value.tax_id" />
+                <InputError :message="profileForm.errors.value.tax_id" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Currency (ISO)</label>
                 <input
-                  v-model="editingCompany.currency_code"
+                  v-model="editingProfile.currency_code"
                   type="text"
                   class="input-primary"
                   :class="{
-                    'border-red-500 ring-red-500/20': companyForm.errors.value.currency_code,
+                    'border-red-500 ring-red-500/20': profileForm.errors.value.currency_code,
                   }"
                   placeholder="BDT"
                 />
-                <InputError :message="companyForm.errors.value.currency_code" />
+                <InputError :message="profileForm.errors.value.currency_code" />
               </div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Email</label>
               <input
-                v-model="editingCompany.email"
+                v-model="editingProfile.email"
                 type="email"
                 class="input-primary"
-                :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.email }"
-                placeholder="company@example.com"
+                :class="{ 'border-red-500 ring-red-500/20': profileForm.errors.value.email }"
+                placeholder="profile@example.com"
               />
-              <InputError :message="companyForm.errors.value.email" />
+              <InputError :message="profileForm.errors.value.email" />
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Address</label>
               <textarea
-                v-model="editingCompany.address"
+                v-model="editingProfile.address"
                 class="input-primary h-20"
-                :class="{ 'border-red-500 ring-red-500/20': companyForm.errors.value.address }"
+                :class="{ 'border-red-500 ring-red-500/20': profileForm.errors.value.address }"
                 placeholder="Street address..."
               ></textarea>
-              <InputError :message="companyForm.errors.value.address" />
+              <InputError :message="profileForm.errors.value.address" />
             </div>
           </div>
           <div class="p-6 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
             <button
-              @click="editingCompany = null"
+              @click="editingProfile = null"
               class="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
             >
               Cancel
             </button>
             <button
-              @click="saveCompany"
-              :disabled="companyForm.processing.value"
+              @click="saveProfile"
+              :disabled="profileForm.processing.value"
               class="btn-primary px-6"
             >
-              {{ companyForm.processing.value ? 'Saving...' : 'Save Changes' }}
+              {{ profileForm.processing.value ? 'Saving...' : 'Save Changes' }}
             </button>
           </div>
         </div>
@@ -278,7 +278,7 @@ onMounted(loadData)
         <div>
           <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Accounting Periods</h2>
           <p class="text-xs text-gray-500">
-            Filtered by Company ID: {{ activeCompanyId || 'None' }}
+            Filtered by Profile ID: {{ activeProfileId || 'None' }}
           </p>
         </div>
         <button @click="startEditFY()" class="btn-primary py-2 px-4 text-sm">
@@ -347,7 +347,7 @@ onMounted(loadData)
           </tbody>
         </table>
         <div v-if="fiscalYears.length === 0 && !isLoading" class="p-8 text-center text-gray-500">
-          No fiscal years found for this company.
+          No fiscal years found for this profile.
         </div>
       </div>
 

@@ -66,7 +66,7 @@ export const useAccountingStore = defineStore('accounting', () => {
       loading.value = false
     }
   }
-  
+
   // Create a quick journal entry
   async function createQuickJournalEntry(entryData) {
     loading.value = true
@@ -234,17 +234,17 @@ export const useAccountingStore = defineStore('accounting', () => {
     }
   }
 
-  // Companies
-  async function fetchCompanies() {
-    return await api.get('/api/v1/companies')
+  // Profiles
+  async function fetchProfiles() {
+    return await api.get('/api/v1/profiles')
   }
 
-  async function updateCompany(id, data) {
-    return await api.put(`/api/v1/companies/${id}`, data)
+  async function updateProfile(id, data) {
+    return await api.put(`/api/v1/profiles/${id}`, data)
   }
 
-  async function createCompany(data) {
-    return await api.post('/api/v1/companies', data)
+  async function createProfile(data) {
+    return await api.post('/api/v1/profiles', data)
   }
 
   // Fiscal Years
@@ -281,9 +281,9 @@ export const useAccountingStore = defineStore('accounting', () => {
     fetchBalanceSheet,
     fetchWorksheet,
     fetchDashboardStats,
-    fetchCompanies,
-    updateCompany,
-    createCompany,
+    fetchProfiles,
+    updateProfile,
+    createProfile,
     fetchFiscalYears,
     updateFiscalYear,
     createFiscalYear

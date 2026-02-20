@@ -12,9 +12,9 @@ const apiInstance = axios.create({
 });
 
 apiInstance.interceptors.request.use((config) => {
-  const companyId = localStorage.getItem('company_id');
-  if (companyId) {
-    config.headers['X-Company-ID'] = companyId;
+  const profileId = localStorage.getItem('profile_id');
+  if (profileId) {
+    config.headers['X-Profile-ID'] = profileId;
   }
   return config;
 });

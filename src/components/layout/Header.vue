@@ -4,8 +4,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../../composables/useDarkMode'
 import { useUIStore } from '../../stores/ui'
-import CompanySelector from './CompanySelector.vue'
 import FiscalYearSelector from './FiscalYearSelector.vue'
+import ProfileSelector from './ProfileSelector.vue'
 
 const { isDark, toggle } = useDarkMode()
 const uiStore = useUIStore()
@@ -38,7 +38,7 @@ function handleGlobalSearch() {
       </button>
 
       <div class="flex items-center gap-1 sm:gap-3 flex-shrink-1 min-w-0">
-        <CompanySelector />
+        <ProfileSelector />
         <FiscalYearSelector />
       </div>
 
