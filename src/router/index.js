@@ -15,6 +15,11 @@ const router = createRouter({
       component: Dashboard,
     },
     {
+      path: '/contacts',
+      name: 'contacts',
+      component: () => import('../views/Contacts.vue'),
+    },
+    {
       path: '/journals',
       name: 'journals',
       component: () => import('../views/JournalEntryList.vue'),

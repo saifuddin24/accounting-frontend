@@ -1,18 +1,21 @@
 <script setup>
 import { ArrowUpDown, Printer, Search } from 'lucide-vue-next'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SelectDropdown from '../components/ui/SelectDropdown.vue'
 import SkeletonTable from '../components/ui/SkeletonTable.vue'
 import { useAccountingStore } from '../stores/accounting'
+import { useContactStore } from '../stores/contacts'
 import { formatDate } from '../utils/format'
 
 const store = useAccountingStore()
+const contactStore = useContactStore()
 const route = useRoute()
 const router = useRouter()
 
 const filters = ref({
   account_id: '',
+  contact_id: '',
   start_date: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10), // Jan 1st
   end_date: new Date().toISOString().slice(0, 10),
   sort_by: 'date',
@@ -21,12 +24,15 @@ const filters = ref({
 
 const reportData = ref(null)
 
+const contactOptions = computed(() => contactStore.contactOptions || [])
+
 async function fetchData() {
   if (!filters.value.account_id) return
   try {
     reportData.value = await store.fetchLedger(filters.value.account_id, {
       start_date: filters.value.start_date,
       end_date: filters.value.end_date,
+      contact_id: filters.value.contact_id,
       sort_by: filters.value.sort_by,
       sort_order: filters.value.sort_order,
     })
@@ -40,6 +46,7 @@ async function generateReport() {
   router.push({
     query: {
       account_id: filters.value.account_id,
+      contact_id: filters.value.contact_id,
       start_date: filters.value.start_date,
       end_date: filters.value.end_date,
       sort: filters.value.sort_by,
@@ -63,6 +70,7 @@ function syncStateFromQuery() {
   const query = route.query
   if (query.account_id) {
     filters.value.account_id = query.account_id
+    filters.value.contact_id = query.contact_id || ''
     filters.value.start_date = query.start_date || filters.value.start_date
     filters.value.end_date = query.end_date || filters.value.end_date
     filters.value.sort_by = query.sort || filters.value.sort_by
@@ -85,6 +93,7 @@ watch(
 
 onMounted(async () => {
   await store.fetchAccounts()
+  await contactStore.fetchContacts()
   if (syncStateFromQuery()) {
     fetchData()
   }
@@ -104,13 +113,21 @@ onMounted(async () => {
 
     <!-- Filter Card -->
     <div class="card p-6 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        <div class="md:col-span-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
           <label class="block text-sm font-medium mb-1">Select Account</label>
           <SelectDropdown
             v-model="filters.account_id"
             :options="store.accountOptions"
-            placeholder="Choose an account to view..."
+            placeholder="Choose account..."
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Filter by Contact</label>
+          <SelectDropdown
+            v-model="filters.contact_id"
+            :options="contactOptions"
+            placeholder="All Contacts"
           />
         </div>
         <div>
