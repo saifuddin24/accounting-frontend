@@ -20,10 +20,10 @@ import SelectDropdown from '../components/ui/SelectDropdown.vue'
 import { useForm } from '../composables/useForm'
 import { useAccountingStore } from '../stores/accounting'
 import {
+  accountToSlug,
   buildQuickJournalPath,
   normalizeTypeSlug,
   slugify,
-  accountToSlug,
 } from '../utils/journalQuickRoute'
 
 const store = useAccountingStore()
@@ -391,10 +391,7 @@ watch(
     <!-- Step 2: Accounts Grid -->
     <div v-if="currentStep === 2">
       <div class="flex items-center gap-4 mb-6">
-        <button
-          @click="goToStep1"
-          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
+        <button @click="goToStep1" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
           <ChevronLeft class="w-5 h-5" />
         </button>
         <h2 class="text-xl font-bold flex items-center gap-2">
@@ -437,10 +434,7 @@ watch(
     <!-- Step 3: Fast Entry Form -->
     <div v-if="currentStep === 3">
       <div class="flex items-center gap-4 mb-6">
-        <button
-          @click="goToStep2"
-          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
+        <button @click="goToStep2" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
           <ChevronLeft class="w-5 h-5" />
         </button>
         <div>
@@ -728,8 +722,8 @@ watch(
         </div>
 
         <!-- Summary & Post -->
-        <div class="space-y-6">
-          <div class="card p-6 sticky top-6 overflow-hidden">
+        <div class="space-y-6 sticky top-6">
+          <div class="card p-6 overflow-hidden">
             <div
               class="absolute top-0 right-0 w-32 h-32 bg-primary-100/20 dark:bg-primary-900/10 rounded-full -mr-16 -mt-16"
             ></div>
